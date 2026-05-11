@@ -143,7 +143,7 @@ model RecalculoGuia {
   motivo          String?          @db.Text
   solicitante     String?          @db.VarChar(255)
   dataSolicitacao DateTime?        @map("data_solicitacao")
-  dataRecalculo   DateTime?       @map("data_recalculo")
+  dataRecalculo   DateTime       @map("data_recalculo")
   responsavelId   String         @map("responsavel_id") @db.Uuid
   status          StatusRecalculo @default(LANCADO)
   observacoes     String?         @db.Text
@@ -153,7 +153,7 @@ model RecalculoGuia {
   updatedAt       DateTime        @updatedAt @map("atualizado_em")
 
   empresa       Empresa                @relation(fields: [empresaId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  responsavel   Usuario                @relation("RecalculoResponsavel", fields: [responsavelId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  responsavel   Usuario                @relation("RecalculoResponsavel", fields: [responsavelId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   criadoPor     Usuario                @relation("RecalculoCriadoPor", fields: [criadoPorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   atualizadoPor Usuario?               @relation("RecalculoAtualizadoPor", fields: [atualizadoPorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   evidencias    EvidenciaSolicitacao[]
@@ -194,7 +194,7 @@ model Auditoria {
   valorNovo     String?            @map("valor_novo") @db.Text
   createdAt     DateTime           @default(now()) @map("criado_em")
 
-  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   @@index([usuarioId], map: "idx_auditorias_usuario_id")
   @@index([entidade], map: "idx_auditorias_entidade")

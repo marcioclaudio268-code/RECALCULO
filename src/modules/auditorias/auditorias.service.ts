@@ -1,0 +1,46 @@
+import {
+  AcaoAuditoria,
+  EntidadeAuditoria,
+  type Prisma
+} from "../../generated/prisma/client.js";
+
+type AuditoriaClient = Pick<Prisma.TransactionClient, "auditoria">;
+
+type RegistrarCriacaoRecalculoParams = {
+  usuarioId: string;
+  recalculoId: string;
+  resumo: {
+    empresaId: string;
+    tipoGuia: string;
+    competencia: string;
+    descricao: string;
+    dataRecalculo: Date;
+    responsavelId: string;
+    status: string;
+  };
+};
+
+export async function registrarCriacaoRecalculo(
+  client: AuditoriaClient,
+  params: RegistrarCriacaoRecalculoParams
+) {
+  return client.auditoria.create({
+    data: {
+      usuarioId: params.usuarioId,
+      entidade: EntidadeAuditoria.RECALCULO_GUIA,
+      entidadeId: params.recalculoId,
+      acao: AcaoAuditoria.CRIACAO,
+      campoAlterado: null,
+      valorAnterior: null,
+      valorNovo: JSON.stringify({
+        empresaId: params.resumo.empresaId,
+        tipoGuia: params.resumo.tipoGuia,
+        competencia: params.resumo.competencia,
+        descricao: params.resumo.descricao,
+        dataRecalculo: params.resumo.dataRecalculo.toISOString(),
+        responsavelId: params.resumo.responsavelId,
+        status: params.resumo.status
+      })
+    }
+  });
+}

@@ -118,6 +118,63 @@ Rode o build:
 npm start
 ```
 
+## Rotas iniciais da API
+
+Healthcheck:
+
+```http
+GET /health
+```
+
+Listar empresas:
+
+```http
+GET /empresas
+GET /empresas?busca=exemplo
+```
+
+Detalhar empresa:
+
+```http
+GET /empresas/:id
+```
+
+Listar recalculos:
+
+```http
+GET /recalculos
+GET /recalculos?competencia=2026-05&status=LANCADO
+```
+
+Detalhar recalculo:
+
+```http
+GET /recalculos/:id
+```
+
+Criar recalculo:
+
+```http
+POST /recalculos
+x-user-id: <id do usuario do seed>
+Content-Type: application/json
+
+{
+  "empresaId": "<id da empresa>",
+  "tipoGuia": "DAS",
+  "competencia": "2026-06",
+  "descricao": "Recalculo de guia DAS solicitado para validacao da API",
+  "dataRecalculo": "2026-06-15T10:00:00.000-03:00",
+  "responsavelId": "<id do usuario responsavel>",
+  "motivo": "Teste de desenvolvimento",
+  "solicitante": "Contato Exemplo",
+  "dataSolicitacao": "2026-06-14T09:00:00.000-03:00",
+  "observacoes": "Registro ficticio para teste local"
+}
+```
+
+O header `x-user-id` e temporario para desenvolvimento, ate a implementacao do login real. Ele nao e autenticacao; apenas identifica o usuario ativo que sera usado como criador do registro e da auditoria.
+
 ## Modelo inicial
 
 O schema inicial contém:
@@ -148,5 +205,5 @@ Regras contempladas na modelagem:
 - importação de planilhas CSV/Excel
 - upload e armazenamento físico de prints/evidências
 - exportação de relatório Excel
-- regras de serviço para gravação automática de auditoria
+- auditoria automatica completa para todas as acoes do sistema
 - backups automatizados
