@@ -1,0 +1,336 @@
+:root {
+  color: #18212f;
+  background: #f4f6f8;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  border: 0;
+  border-radius: 6px;
+  background: #1d5f74;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 700;
+  min-height: 40px;
+  padding: 0 16px;
+}
+
+button:hover {
+  background: #174d5f;
+}
+
+button:disabled {
+  background: #91a2ad;
+  cursor: not-allowed;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  border: 1px solid #cbd3da;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #18212f;
+  outline: none;
+  padding: 10px 12px;
+}
+
+textarea {
+  resize: vertical;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #1d5f74;
+  box-shadow: 0 0 0 3px rgba(29, 95, 116, 0.12);
+}
+
+.app-shell {
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.topbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  border-bottom: 1px solid #d7dde2;
+  padding-bottom: 18px;
+}
+
+.eyebrow {
+  color: #5c6b76;
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: 28px;
+  line-height: 1.15;
+}
+
+h2 {
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+p,
+small {
+  color: #5c6b76;
+}
+
+.temporary-user {
+  display: grid;
+  gap: 6px;
+  max-width: 420px;
+  min-width: min(420px, 100%);
+}
+
+.temporary-user span,
+.recalculo-form label {
+  color: #34424e;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 390px;
+  gap: 24px;
+  margin-top: 24px;
+  align-items: start;
+}
+
+.companies-area,
+.form-area {
+  min-width: 0;
+}
+
+.section-heading {
+  align-items: flex-start;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.section-heading.compact {
+  margin-bottom: 14px;
+}
+
+.counter {
+  color: #5c6b76;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.search-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 96px 96px 96px;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.button-secondary {
+  background: #dce4e8;
+  color: #18212f;
+}
+
+.button-secondary:hover {
+  background: #ccd8de;
+}
+
+.button-compact {
+  min-height: 34px;
+  padding: 0 10px;
+  white-space: nowrap;
+}
+
+.table-wrap {
+  background: #ffffff;
+  border: 1px solid #d7dde2;
+  border-radius: 8px;
+  overflow: auto;
+}
+
+table {
+  border-collapse: collapse;
+  min-width: 960px;
+  width: 100%;
+}
+
+th,
+td {
+  border-bottom: 1px solid #e7ebef;
+  padding: 12px 14px;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: #eef3f5;
+  color: #34424e;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+td {
+  font-size: 14px;
+}
+
+tr:last-child td {
+  border-bottom: 0;
+}
+
+.selected-row td {
+  background: #eaf4f6;
+}
+
+.status-on,
+.status-off {
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 4px 9px;
+}
+
+.status-on {
+  background: #dff4e8;
+  color: #17633d;
+}
+
+.status-off {
+  background: #f4e1df;
+  color: #8c3127;
+}
+
+.empty-cell {
+  color: #5c6b76;
+  text-align: center;
+}
+
+.recalculo-panel {
+  background: #ffffff;
+  border: 1px solid #d7dde2;
+  border-radius: 8px;
+  padding: 18px;
+  position: sticky;
+  top: 18px;
+}
+
+.placeholder {
+  border: 1px dashed #b7c2ca;
+  border-radius: 8px;
+  color: #5c6b76;
+  padding: 18px;
+}
+
+.selected-company {
+  border-left: 4px solid #1d5f74;
+  display: grid;
+  gap: 4px;
+  margin-bottom: 16px;
+  padding-left: 12px;
+}
+
+.selected-company span {
+  color: #5c6b76;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.selected-company strong {
+  line-height: 1.25;
+}
+
+.recalculo-form {
+  display: grid;
+  gap: 12px;
+}
+
+.recalculo-form label {
+  display: grid;
+  gap: 6px;
+}
+
+.message {
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 12px;
+}
+
+.message.error {
+  background: #f8e5e2;
+  color: #8c3127;
+}
+
+.message.success {
+  background: #def3e7;
+  color: #17633d;
+}
+
+.message.warning {
+  background: #fff0c7;
+  color: #7a5300;
+}
+
+@media (max-width: 1080px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .recalculo-panel {
+    position: static;
+  }
+}
+
+@media (max-width: 760px) {
+  .app-shell {
+    padding: 16px;
+  }
+
+  .topbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .search-row {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,177 @@
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { Empresa, listarEmpresas } from "../api/empresas";
+import { RecalculoForm } from "./RecalculoForm";
+
+const USER_ID_STORAGE_KEY = "recalculo_guias_user_id";
+
+export function EmpresasPage() {
+  const [empresas, setEmpresas] = useState<Empresa[]>([]);
+  const [busca, setBusca] = useState("");
+  const [buscaAplicada, setBuscaAplicada] = useState("");
+  const [limit, setLimit] = useState(20);
+  const [isLoading, setIsLoading] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const [empresaSelecionada, setEmpresaSelecionada] = useState<Empresa | null>(
+    null
+  );
+  const [userId, setUserId] = useState(() =>
+    localStorage.getItem(USER_ID_STORAGE_KEY) ?? ""
+  );
+
+  useEffect(() => {
+    localStorage.setItem(USER_ID_STORAGE_KEY, userId);
+  }, [userId]);
+
+  useEffect(() => {
+    carregarEmpresas(buscaAplicada, limit);
+  }, [buscaAplicada, limit]);
+
+  async function carregarEmpresas(termo: string, limite: number) {
+    setIsLoading(true);
+    setErro(null);
+
+    try {
+      const data = await listarEmpresas({
+        busca: termo,
+        limit: limite
+      });
+      setEmpresas(data);
+    } catch (error) {
+      setErro(error instanceof Error ? error.message : "Erro ao carregar empresas.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  function handleBuscar(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setBuscaAplicada(busca.trim());
+  }
+
+  function handleLimpar() {
+    setBusca("");
+    setBuscaAplicada("");
+  }
+
+  const quantidadeTexto = useMemo(() => {
+    if (isLoading) {
+      return "Carregando empresas...";
+    }
+
+    return `${empresas.length} empresa${empresas.length === 1 ? "" : "s"} exibida${
+      empresas.length === 1 ? "" : "s"
+    }`;
+  }, [empresas.length, isLoading]);
+
+  return (
+    <main className="app-shell">
+      <header className="topbar">
+        <div>
+          <span className="eyebrow">Rede local</span>
+          <h1>Recálculo de Guias</h1>
+        </div>
+        <label className="temporary-user">
+          <span>ID do usuário temporário</span>
+          <input
+            value={userId}
+            onChange={(event) => setUserId(event.target.value)}
+            placeholder="Cole o ID do Admin Local"
+          />
+          <small>Será substituído pelo login real.</small>
+        </label>
+      </header>
+
+      <section className="workspace">
+        <div className="companies-area">
+          <div className="section-heading">
+            <div>
+              <h2>Empresas</h2>
+              <p>Busque por nome, código ou documento.</p>
+            </div>
+            <span className="counter">{quantidadeTexto}</span>
+          </div>
+
+          <form className="search-row" onSubmit={handleBuscar}>
+            <input
+              value={busca}
+              onChange={(event) => setBusca(event.target.value)}
+              placeholder="Nome, código ou documento"
+            />
+            <select
+              value={limit}
+              onChange={(event) => setLimit(Number(event.target.value))}
+              aria-label="Limite de empresas"
+            >
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+            <button type="submit">Buscar</button>
+            <button type="button" className="button-secondary" onClick={handleLimpar}>
+              Limpar
+            </button>
+          </form>
+
+          {erro && <div className="message error">{erro}</div>}
+
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Nome</th>
+                  <th>Documento</th>
+                  <th>Tipo</th>
+                  <th>Fantasia</th>
+                  <th>Status</th>
+                  <th>Ação</th>
+                </tr>
+              </thead>
+              <tbody>
+                {empresas.map((empresa) => (
+                  <tr
+                    key={empresa.id}
+                    className={
+                      empresaSelecionada?.id === empresa.id ? "selected-row" : ""
+                    }
+                  >
+                    <td>{empresa.codigoEmpresa}</td>
+                    <td>{empresa.nome}</td>
+                    <td>{empresa.documento}</td>
+                    <td>{empresa.tipoDocumento}</td>
+                    <td>{empresa.nomeFantasia ?? "-"}</td>
+                    <td>
+                      <span className={empresa.ativa ? "status-on" : "status-off"}>
+                        {empresa.ativa ? "Ativa" : "Inativa"}
+                      </span>
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="button-compact"
+                        onClick={() => setEmpresaSelecionada(empresa)}
+                      >
+                        Lançar recálculo
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {!isLoading && empresas.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="empty-cell">
+                      Nenhuma empresa encontrada.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <aside className="form-area">
+          <RecalculoForm empresa={empresaSelecionada} userId={userId.trim()} />
+        </aside>
+      </section>
+    </main>
+  );
+}
