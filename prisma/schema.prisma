@@ -1,0 +1,204 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum TipoDocumento {
+  CPF
+  CNPJ
+
+  @@map("tipo_documento")
+}
+
+enum TipoGuia {
+  DAS
+  DARF
+  GPS
+  FGTS
+  ICMS
+  ISS
+  DAE
+  GARE
+  PARCELAMENTO
+  OUTROS
+
+  @@map("tipo_guia")
+}
+
+enum StatusRecalculo {
+  LANCADO
+  EM_REVISAO
+  FINALIZADO
+  CANCELADO
+
+  @@map("status_recalculo")
+}
+
+enum AcaoAuditoria {
+  CRIACAO
+  EDICAO
+  CANCELAMENTO
+  IMPORTACAO
+  ANEXO_ADICIONADO
+  ANEXO_REMOVIDO
+  LOGIN
+
+  @@map("acao_auditoria")
+}
+
+enum EntidadeAuditoria {
+  USUARIO
+  EMPRESA
+  CONTATO_EMPRESA
+  IMPORTACAO_EMPRESAS
+  RECALCULO_GUIA
+  EVIDENCIA_SOLICITACAO
+
+  @@map("entidade_auditoria")
+}
+
+model Usuario {
+  id        String   @id @default(uuid()) @db.Uuid
+  nome      String   @db.VarChar(255)
+  email     String   @unique(map: "usuarios_email_key") @db.VarChar(255)
+  senhaHash String   @map("senha_hash") @db.VarChar(255)
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("criado_em")
+  updatedAt DateTime @updatedAt @map("atualizado_em")
+
+  importacoesEmpresas   ImportacaoEmpresa[]
+  recalculosResponsavel RecalculoGuia[]        @relation("RecalculoResponsavel")
+  recalculosCriados     RecalculoGuia[]        @relation("RecalculoCriadoPor")
+  recalculosAtualizados RecalculoGuia[]        @relation("RecalculoAtualizadoPor")
+  evidenciasEnviadas    EvidenciaSolicitacao[]
+  auditorias            Auditoria[]
+
+  @@map("usuarios")
+}
+
+model Empresa {
+  id            String        @id @default(uuid()) @db.Uuid
+  codigoEmpresa String        @unique(map: "empresas_codigo_empresa_key") @map("codigo_empresa") @db.VarChar(50)
+  documento     String        @unique(map: "empresas_documento_key") @db.VarChar(20)
+  tipoDocumento TipoDocumento @map("tipo_documento")
+  nome          String        @db.VarChar(255)
+  nomeFantasia  String?       @map("nome_fantasia") @db.VarChar(255)
+  ativa         Boolean       @default(true)
+  createdAt     DateTime      @default(now()) @map("criado_em")
+  updatedAt     DateTime      @updatedAt @map("atualizado_em")
+
+  contatos   ContatoEmpresa[]
+  recalculos RecalculoGuia[]
+
+  @@index([nome], map: "idx_empresas_nome")
+  @@map("empresas")
+}
+
+model ContatoEmpresa {
+  id           String   @id @default(uuid()) @db.Uuid
+  empresaId    String   @map("empresa_id") @db.Uuid
+  nome         String   @db.VarChar(255)
+  telefone     String?  @db.VarChar(30)
+  email        String?  @db.VarChar(255)
+  cargo        String?  @db.VarChar(120)
+  departamento String?  @db.VarChar(120)
+  ativo        Boolean  @default(true)
+  createdAt    DateTime @default(now()) @map("criado_em")
+  updatedAt    DateTime @updatedAt @map("atualizado_em")
+
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([empresaId], map: "idx_contatos_empresa_empresa_id")
+  @@map("contatos_empresa")
+}
+
+model ImportacaoEmpresa {
+  id                  String   @id @default(uuid()) @db.Uuid
+  nomeArquivo         String   @map("nome_arquivo") @db.VarChar(255)
+  usuarioId           String   @map("usuario_id") @db.Uuid
+  totalLinhas         Int      @default(0) @map("total_linhas")
+  empresasCriadas     Int      @default(0) @map("empresas_criadas")
+  empresasAtualizadas Int      @default(0) @map("empresas_atualizadas")
+  contatosCriados     Int      @default(0) @map("contatos_criados")
+  linhasIgnoradas     Int      @default(0) @map("linhas_ignoradas")
+  erros               Json?
+  createdAt           DateTime @default(now()) @map("criado_em")
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([usuarioId], map: "idx_importacoes_empresas_usuario_id")
+  @@map("importacoes_empresas")
+}
+
+model RecalculoGuia {
+  id              String          @id @default(uuid()) @db.Uuid
+  empresaId       String          @map("empresa_id") @db.Uuid
+  tipoGuia        TipoGuia        @map("tipo_guia")
+  competencia     String          @db.VarChar(7)
+  descricao       String          @db.Text
+  motivo          String          @db.Text
+  solicitante     String          @db.VarChar(255)
+  dataSolicitacao DateTime        @map("data_solicitacao")
+  dataRecalculo   DateTime?       @map("data_recalculo")
+  responsavelId   String?         @map("responsavel_id") @db.Uuid
+  status          StatusRecalculo @default(LANCADO)
+  observacoes     String?         @db.Text
+  criadoPorId     String          @map("criado_por_id") @db.Uuid
+  atualizadoPorId String?         @map("atualizado_por_id") @db.Uuid
+  createdAt       DateTime        @default(now()) @map("criado_em")
+  updatedAt       DateTime        @updatedAt @map("atualizado_em")
+
+  empresa       Empresa                @relation(fields: [empresaId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  responsavel   Usuario?               @relation("RecalculoResponsavel", fields: [responsavelId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  criadoPor     Usuario                @relation("RecalculoCriadoPor", fields: [criadoPorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  atualizadoPor Usuario?               @relation("RecalculoAtualizadoPor", fields: [atualizadoPorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  evidencias    EvidenciaSolicitacao[]
+
+  @@index([empresaId], map: "idx_recalculos_guias_empresa_id")
+  @@index([dataRecalculo], map: "idx_recalculos_guias_data_recalculo")
+  @@index([competencia], map: "idx_recalculos_guias_competencia")
+  @@index([status], map: "idx_recalculos_guias_status")
+  @@index([responsavelId], map: "idx_recalculos_guias_responsavel_id")
+  @@map("recalculos_guias")
+}
+
+model EvidenciaSolicitacao {
+  id             String   @id @default(uuid()) @db.Uuid
+  recalculoId    String   @map("recalculo_id") @db.Uuid
+  nomeArquivo    String   @map("nome_arquivo") @db.VarChar(255)
+  caminhoArquivo String   @map("caminho_arquivo") @db.VarChar(500)
+  tipoArquivo    String   @map("tipo_arquivo") @db.VarChar(120)
+  tamanhoArquivo Int      @map("tamanho_arquivo")
+  enviadoPorId   String   @map("enviado_por_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("criado_em")
+
+  recalculo  RecalculoGuia @relation(fields: [recalculoId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  enviadoPor Usuario       @relation(fields: [enviadoPorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([recalculoId], map: "idx_evidencias_solicitacao_recalculo_id")
+  @@map("evidencias_solicitacao")
+}
+
+model Auditoria {
+  id            String             @id @default(uuid()) @db.Uuid
+  usuarioId     String?            @map("usuario_id") @db.Uuid
+  entidade      EntidadeAuditoria
+  entidadeId    String             @map("entidade_id") @db.Uuid
+  acao          AcaoAuditoria
+  campoAlterado String?            @map("campo_alterado") @db.VarChar(120)
+  valorAnterior String?            @map("valor_anterior") @db.Text
+  valorNovo     String?            @map("valor_novo") @db.Text
+  createdAt     DateTime           @default(now()) @map("criado_em")
+
+  usuario Usuario? @relation(fields: [usuarioId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([usuarioId], map: "idx_auditorias_usuario_id")
+  @@index([entidade], map: "idx_auditorias_entidade")
+  @@index([entidadeId], map: "idx_auditorias_entidade_id")
+  @@index([createdAt], map: "idx_auditorias_criado_em")
+  @@map("auditorias")
+}
