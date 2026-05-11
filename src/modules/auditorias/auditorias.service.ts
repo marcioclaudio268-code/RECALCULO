@@ -44,3 +44,34 @@ export async function registrarCriacaoRecalculo(
     }
   });
 }
+
+type RegistrarImportacaoEmpresasParams = {
+  usuarioId: string;
+  importacaoId: string;
+  resumo: {
+    nomeArquivo: string;
+    totalLinhas: number;
+    empresasCriadas: number;
+    empresasAtualizadas: number;
+    contatosCriados: number;
+    linhasIgnoradas: number;
+    totalErros: number;
+  };
+};
+
+export async function registrarImportacaoEmpresas(
+  client: AuditoriaClient,
+  params: RegistrarImportacaoEmpresasParams
+) {
+  return client.auditoria.create({
+    data: {
+      usuarioId: params.usuarioId,
+      entidade: EntidadeAuditoria.IMPORTACAO_EMPRESAS,
+      entidadeId: params.importacaoId,
+      acao: AcaoAuditoria.IMPORTACAO,
+      campoAlterado: null,
+      valorAnterior: null,
+      valorNovo: JSON.stringify(params.resumo)
+    }
+  });
+}

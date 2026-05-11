@@ -86,6 +86,35 @@ senha: admin123
 
 Esse usuário existe apenas para ambiente local/dev. A senha é fictícia, armazenada como hash no banco, e não deve ser usada em ambiente real.
 
+## Importação local de empresas e contatos
+
+O projeto possui um script local para importar empresas e contatos de um CSV separado por ponto e vírgula. O arquivo deve ter as colunas exportadas pelo sistema atual, incluindo `ID`, `CNPJ`, `Razão social`, `Nome fantasia`, `Nome do Contato`, `Telefone do Contato`, `Email do Contato`, `Cargo do Contato` e `Departamentos do Contato`.
+
+Rodar prévia sem gravar no banco:
+
+```bash
+npm run importar:empresas:preview -- "C:\caminho\arquivo.csv"
+```
+
+Rodar importação real:
+
+```bash
+npm run importar:empresas -- "C:\caminho\arquivo.csv" --usuario-id=<id>
+```
+
+Se `--usuario-id` não for informado, o script tenta usar o usuário ativo `admin@recalculo.local`. Em modo real, a importação grava um resumo em `importacoes_empresas` e cria auditoria com `acao=IMPORTACAO`.
+
+Regras principais:
+
+- o documento é normalizado removendo ponto, barra, hífen e espaços
+- CPF e CNPJ são validados antes da gravação
+- empresa existente com mesmo `codigoEmpresa` e `documento` é atualizada
+- conflito grave entre código e documento é registrado como erro e não é sobrescrito
+- contatos são criados separados da empresa
+- contato duplicado na mesma empresa é evitado por email; sem email, por nome e telefone
+- a linha final de filtros do CSV é ignorada
+- não use dados reais em ambientes de teste fora da rede local autorizada
+
 ## Desenvolvimento
 
 Rode a API em desenvolvimento:
@@ -202,7 +231,7 @@ Regras contempladas na modelagem:
 - frontend
 - login/autenticação completa
 - telas
-- importação de planilhas CSV/Excel
+- upload/importação de planilhas CSV/Excel via tela
 - upload e armazenamento físico de prints/evidências
 - exportação de relatório Excel
 - auditoria automatica completa para todas as acoes do sistema
