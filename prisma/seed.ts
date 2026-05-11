@@ -11,7 +11,7 @@ import { prisma } from "../src/lib/prisma.js";
 const adminEmail = "admin@recalculo.local";
 const adminPassword = "admin123";
 const empresaDocumento = "11222333000181";
-const empresaCodigo = "001";
+const empresaCodigo = "DEV-001";
 const contatoEmail = "contato@empresaexemplo.local";
 const recalculoDescricao = "Recálculo de guia DAS solicitado para validação do ambiente";
 const dataSolicitacao = new Date("2026-05-11T09:00:00.000-03:00");
