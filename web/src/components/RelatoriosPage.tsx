@@ -5,15 +5,21 @@ type RelatoriosPageProps = {
   userId: string;
 };
 
+function dateToInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
 function dataAtualInput() {
-  return new Date().toISOString().slice(0, 10);
+  return dateToInputValue(new Date());
 }
 
 function primeiroDiaMesAtualInput() {
   const hoje = new Date();
-  const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-
-  return primeiroDia.toISOString().slice(0, 10);
+  return dateToInputValue(new Date(hoje.getFullYear(), hoje.getMonth(), 1));
 }
 
 export function RelatoriosPage({ userId }: RelatoriosPageProps) {
