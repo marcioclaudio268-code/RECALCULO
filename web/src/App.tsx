@@ -17,12 +17,14 @@ import { LoginPage } from "./components/LoginPage";
 import { RecalculoDetalhePage } from "./components/RecalculoDetalhePage";
 import { RecalculosPage } from "./components/RecalculosPage";
 import { RelatoriosPage } from "./components/RelatoriosPage";
+import { UsuariosPage } from "./components/UsuariosPage";
 
-type AbaAtual = "empresas" | "recalculos" | "relatorios";
+type AbaAtual = "empresas" | "recalculos" | "relatorios" | "usuarios";
 type TelaAtual =
   | { tipo: "empresas" }
   | { tipo: "recalculos" }
   | { tipo: "relatorios" }
+  | { tipo: "usuarios" }
   | { tipo: "lancar-recalculo"; empresa: Empresa }
   | {
       tipo: "detalhe-recalculo";
@@ -201,6 +203,17 @@ export default function App() {
             >
               {"Relat\u00f3rios"}
             </button>
+            {usuario.perfil === "ADMIN" && (
+              <button
+                type="button"
+                className={
+                  abaAtual === "usuarios" ? "tab-button active" : "tab-button"
+                }
+                onClick={() => setTelaAtual({ tipo: "usuarios" })}
+              >
+                Usuarios
+              </button>
+            )}
           </nav>
         </div>
         <div className="session-user">
@@ -250,6 +263,8 @@ export default function App() {
           }
           onRecalculoAtualizado={() => undefined}
         />
+      ) : telaAtual.tipo === "usuarios" && usuario.perfil === "ADMIN" ? (
+        <UsuariosPage usuarioAtualId={usuario.id} />
       ) : (
         <RelatoriosPage />
       )}

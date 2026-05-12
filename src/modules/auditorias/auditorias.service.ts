@@ -30,6 +30,59 @@ export async function registrarLogin(
   });
 }
 
+type RegistrarCriacaoUsuarioParams = {
+  usuarioId: string;
+  usuarioCriadoId: string;
+  resumo: {
+    nome: string;
+    email: string;
+    perfil: string;
+    ativo: boolean;
+  };
+};
+
+export async function registrarCriacaoUsuario(
+  client: AuditoriaClient,
+  params: RegistrarCriacaoUsuarioParams
+) {
+  return client.auditoria.create({
+    data: {
+      usuarioId: params.usuarioId,
+      entidade: EntidadeAuditoria.USUARIO,
+      entidadeId: params.usuarioCriadoId,
+      acao: AcaoAuditoria.CRIACAO,
+      campoAlterado: null,
+      valorAnterior: null,
+      valorNovo: JSON.stringify(params.resumo)
+    }
+  });
+}
+
+export async function registrarEdicaoUsuario(
+  client: AuditoriaClient,
+  params: {
+    usuarioId: string;
+    usuarioEditadoId: string;
+    alteracoes: AlteracaoAuditoria[];
+  }
+) {
+  return Promise.all(
+    params.alteracoes.map((alteracao) =>
+      client.auditoria.create({
+        data: {
+          usuarioId: params.usuarioId,
+          entidade: EntidadeAuditoria.USUARIO,
+          entidadeId: params.usuarioEditadoId,
+          acao: AcaoAuditoria.EDICAO,
+          campoAlterado: alteracao.campoAlterado,
+          valorAnterior: alteracao.valorAnterior,
+          valorNovo: alteracao.valorNovo
+        }
+      })
+    )
+  );
+}
+
 type RegistrarCriacaoRecalculoParams = {
   usuarioId: string;
   recalculoId: string;

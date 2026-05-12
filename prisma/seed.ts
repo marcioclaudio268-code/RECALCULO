@@ -2,6 +2,7 @@ import { compare, hash } from "bcryptjs";
 import {
   AcaoAuditoria,
   EntidadeAuditoria,
+  PerfilUsuario,
   StatusRecalculo,
   TipoDocumento,
   TipoGuia
@@ -30,6 +31,7 @@ async function seedUsuarioAdmin() {
         nome: "Admin Local",
         email: adminEmail,
         senhaHash: await hash(adminPassword, 10),
+        perfil: PerfilUsuario.ADMIN,
         ativo: true
       }
     });
@@ -39,6 +41,7 @@ async function seedUsuarioAdmin() {
   const precisaAtualizar =
     usuarioExistente.nome !== "Admin Local" ||
     usuarioExistente.ativo !== true ||
+    usuarioExistente.perfil !== PerfilUsuario.ADMIN ||
     !senhaConfere;
 
   if (!precisaAtualizar) {
@@ -51,6 +54,7 @@ async function seedUsuarioAdmin() {
     },
     data: {
       nome: "Admin Local",
+      perfil: PerfilUsuario.ADMIN,
       ativo: true,
       ...(senhaConfere ? {} : { senhaHash: await hash(adminPassword, 10) })
     }

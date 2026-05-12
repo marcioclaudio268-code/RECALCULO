@@ -5,6 +5,7 @@ import { authRoutes } from "./modules/auth/auth.routes.js";
 import { empresasRoutes } from "./modules/empresas/empresas.routes.js";
 import { recalculosRoutes } from "./modules/recalculos/recalculos.routes.js";
 import { relatoriosRoutes } from "./modules/relatorios/relatorios.routes.js";
+import { usuariosRoutes } from "./modules/usuarios/usuarios.routes.js";
 
 export function buildApp() {
   const frontendOrigins = (process.env.FRONTEND_ORIGIN ?? "http://localhost:5173")
@@ -33,6 +34,7 @@ export function buildApp() {
   app.register(empresasRoutes);
   app.register(recalculosRoutes);
   app.register(relatoriosRoutes);
+  app.register(usuariosRoutes);
 
   return app;
 }

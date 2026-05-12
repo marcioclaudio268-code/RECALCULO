@@ -1,18 +1,21 @@
 import type { FastifyRequest } from "fastify";
 import jwt, { type SignOptions } from "jsonwebtoken";
+import { PerfilUsuario } from "../generated/prisma/client.js";
 import { prisma } from "./prisma.js";
 import { HttpError } from "./http-error.js";
 
 const usuarioAutenticadoSelect = {
   id: true,
   nome: true,
-  email: true
+  email: true,
+  perfil: true
 } as const;
 
 export type UsuarioAutenticado = {
   id: string;
   nome: string;
   email: string;
+  perfil: PerfilUsuario;
 };
 
 type JwtPayloadUsuario = {
@@ -98,6 +101,16 @@ export async function autenticarRequest(request: FastifyRequest) {
 
   if (!usuario) {
     throw new HttpError(401, "Usuario autenticado nao encontrado ou inativo.");
+  }
+
+  return usuario;
+}
+
+export async function exigirAdmin(request: FastifyRequest) {
+  const usuario = await autenticarRequest(request);
+
+  if (usuario.perfil !== PerfilUsuario.ADMIN) {
+    throw new HttpError(403, "Acesso restrito a administradores.");
   }
 
   return usuario;

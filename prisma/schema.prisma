@@ -50,6 +50,13 @@ enum AcaoAuditoria {
   @@map("acao_auditoria")
 }
 
+enum PerfilUsuario {
+  ADMIN
+  OPERADOR
+
+  @@map("perfil_usuario")
+}
+
 enum EntidadeAuditoria {
   USUARIO
   EMPRESA
@@ -66,6 +73,7 @@ model Usuario {
   nome      String   @db.VarChar(255)
   email     String   @unique(map: "usuarios_email_key") @db.VarChar(255)
   senhaHash String   @map("senha_hash") @db.VarChar(255)
+  perfil    PerfilUsuario @default(OPERADOR)
   ativo     Boolean  @default(true)
   createdAt DateTime @default(now()) @map("criado_em")
   updatedAt DateTime @updatedAt @map("atualizado_em")

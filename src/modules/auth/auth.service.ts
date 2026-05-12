@@ -8,7 +8,8 @@ import type { LoginBody } from "./auth.schemas.js";
 const usuarioSeguroSelect = {
   id: true,
   nome: true,
-  email: true
+  email: true,
+  perfil: true
 } as const;
 
 export async function login(input: LoginBody) {
@@ -20,6 +21,7 @@ export async function login(input: LoginBody) {
       id: true,
       nome: true,
       email: true,
+      perfil: true,
       senhaHash: true,
       ativo: true
     }
@@ -42,7 +44,8 @@ export async function login(input: LoginBody) {
   const usuarioSeguro = {
     id: usuario.id,
     nome: usuario.nome,
-    email: usuario.email
+    email: usuario.email,
+    perfil: usuario.perfil
   };
   const token = gerarTokenUsuario(usuarioSeguro);
 

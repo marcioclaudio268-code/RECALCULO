@@ -4,6 +4,7 @@ export type UsuarioAutenticado = {
   id: string;
   nome: string;
   email: string;
+  perfil: "ADMIN" | "OPERADOR";
 };
 
 export type LoginResponse = {

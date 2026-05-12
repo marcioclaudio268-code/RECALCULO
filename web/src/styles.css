@@ -191,6 +191,7 @@ small {
 .temporary-user span,
 .recalculo-form label,
 .launch-form label span,
+.usuario-create-form label span,
 .recalculos-filter-row label span,
 .relatorios-form label span {
   color: #34424e;
@@ -484,6 +485,40 @@ tr:last-child td {
   gap: 10px;
 }
 
+.usuarios-layout {
+  display: grid;
+  gap: 14px;
+}
+
+.usuario-create-form {
+  align-items: end;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(180px, 1fr) minmax(220px, 1fr) minmax(160px, 1fr) 150px auto;
+}
+
+.usuario-create-form label {
+  display: grid;
+  gap: 6px;
+}
+
+.usuarios-table {
+  min-width: 1180px;
+}
+
+.password-action,
+.table-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.password-action input {
+  min-width: 150px;
+  width: 180px;
+}
+
 .message {
   border-radius: 8px;
   font-size: 14px;
@@ -679,7 +714,8 @@ tr:last-child td {
   }
 
   .filters-secondary,
-  .launch-form-grid {
+  .launch-form-grid,
+  .usuario-create-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -716,7 +752,8 @@ tr:last-child td {
   .relatorios-form,
   .detail-grid,
   .edit-form-grid,
-  .launch-form-grid {
+  .launch-form-grid,
+  .usuario-create-form {
     grid-template-columns: 1fr;
   }
 
@@ -730,6 +767,16 @@ tr:last-child td {
   .filter-actions,
   .edit-form-actions {
     flex-direction: column;
+  }
+
+  .password-action,
+  .table-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .password-action input {
+    width: 100%;
   }
 
   .evidence-upload {
