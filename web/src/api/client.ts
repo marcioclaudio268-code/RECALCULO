@@ -2,6 +2,14 @@ export const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3001";
 
 const AUTH_TOKEN_STORAGE_KEY = "recalculo_guias_auth_token";
 
+type UnauthorizedHandler = () => void;
+
+type ApiRequestOptions = RequestInit & {
+  skipUnauthorizedHandler?: boolean;
+};
+
+let unauthorizedHandler: UnauthorizedHandler | null = null;
+
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -10,6 +18,14 @@ export class ApiError extends Error {
     super(message);
     this.name = "ApiError";
   }
+}
+
+export function setUnauthorizedHandler(handler: UnauthorizedHandler | null) {
+  unauthorizedHandler = handler;
+}
+
+function notificarUnauthorized() {
+  unauthorizedHandler?.();
 }
 
 export function getAuthToken() {
@@ -35,7 +51,15 @@ export function getAuthHeaders() {
   return headers;
 }
 
-async function extrairErroResponse(response: Response, fallback: string) {
+export async function tratarErroResponse(
+  response: Response,
+  fallback: string,
+  options: { skipUnauthorizedHandler?: boolean } = {}
+) {
+  if (response.status === 401 && options.skipUnauthorizedHandler !== true) {
+    notificarUnauthorized();
+  }
+
   let message = fallback;
 
   try {
@@ -50,8 +74,9 @@ async function extrairErroResponse(response: Response, fallback: string) {
 
 export async function apiRequest<T>(
   path: string,
-  options: RequestInit = {}
+  options: ApiRequestOptions = {}
 ): Promise<T> {
+  const { skipUnauthorizedHandler, ...requestOptions } = options;
   const headers = new Headers(options.headers);
   const token = getAuthToken();
 
@@ -64,14 +89,15 @@ export async function apiRequest<T>(
   }
 
   const response = await fetch(`${API_URL}${path}`, {
-    ...options,
+    ...requestOptions,
     headers
   });
 
   if (!response.ok) {
-    throw await extrairErroResponse(
+    throw await tratarErroResponse(
       response,
-      "Nao foi possivel concluir a operacao."
+      "Nao foi possivel concluir a operacao.",
+      { skipUnauthorizedHandler }
     );
   }
 

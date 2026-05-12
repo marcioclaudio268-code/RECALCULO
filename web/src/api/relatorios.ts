@@ -1,23 +1,10 @@
-import { API_URL, ApiError, getAuthHeaders } from "./client";
+import { API_URL, getAuthHeaders, tratarErroResponse } from "./client";
 
 export type BaixarRelatorioRecalculosParams = {
   dataInicio: string;
   dataFim: string;
   incluirCancelados: boolean;
 };
-
-async function extrairErroResponse(response: Response) {
-  let message = "N\u00e3o foi poss\u00edvel gerar o relat\u00f3rio.";
-
-  try {
-    const data = (await response.json()) as { erro?: string; message?: string };
-    message = data.erro ?? data.message ?? message;
-  } catch {
-    // Mantem mensagem generica quando a API nao retorna JSON.
-  }
-
-  return new ApiError(message, response.status);
-}
 
 function extrairNomeArquivo(response: Response, fallback: string) {
   const disposition = response.headers.get("Content-Disposition");
@@ -58,7 +45,10 @@ export async function baixarRelatorioRecalculos(
   );
 
   if (!response.ok) {
-    throw await extrairErroResponse(response);
+    throw await tratarErroResponse(
+      response,
+      "N\u00e3o foi poss\u00edvel gerar o relat\u00f3rio."
+    );
   }
 
   const filename = extrairNomeArquivo(

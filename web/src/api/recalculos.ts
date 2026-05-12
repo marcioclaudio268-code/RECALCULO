@@ -1,4 +1,9 @@
-import { API_URL, ApiError, apiRequest, getAuthHeaders } from "./client";
+import {
+  API_URL,
+  apiRequest,
+  getAuthHeaders,
+  tratarErroResponse
+} from "./client";
 
 export type TipoGuia =
   | "DAS"
@@ -178,19 +183,6 @@ function appendParam(params: URLSearchParams, key: string, value?: string | numb
   }
 }
 
-async function extrairErroResponse(response: Response) {
-  let message = "Não foi possível concluir a operação.";
-
-  try {
-    const data = (await response.json()) as { erro?: string; message?: string };
-    message = data.erro ?? data.message ?? message;
-  } catch {
-    // Mantem mensagem generica quando a API nao retorna JSON.
-  }
-
-  return new ApiError(message, response.status);
-}
-
 export async function listarRecalculos(params: ListarRecalculosParams = {}) {
   const searchParams = new URLSearchParams();
 
@@ -234,7 +226,10 @@ export async function enviarEvidenciaRecalculo(recalculoId: string, file: File) 
   });
 
   if (!response.ok) {
-    throw await extrairErroResponse(response);
+    throw await tratarErroResponse(
+      response,
+      "Nao foi possivel concluir a operacao."
+    );
   }
 
   return response.json() as Promise<EvidenciaDetalhe>;
@@ -246,7 +241,10 @@ export async function baixarArquivoEvidencia(evidenciaId: string) {
   });
 
   if (!response.ok) {
-    throw await extrairErroResponse(response);
+    throw await tratarErroResponse(
+      response,
+      "Nao foi possivel concluir a operacao."
+    );
   }
 
   return response.blob();

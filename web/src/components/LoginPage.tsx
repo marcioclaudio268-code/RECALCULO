@@ -5,10 +5,11 @@ import {
 } from "../api/auth";
 
 type LoginPageProps = {
+  mensagem?: string | null;
   onLogin: (token: string, usuario: UsuarioAutenticado) => void;
 };
 
-export function LoginPage({ onLogin }: LoginPageProps) {
+export function LoginPage({ mensagem, onLogin }: LoginPageProps) {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [isEntrando, setIsEntrando] = useState(false);
@@ -52,6 +53,8 @@ export function LoginPage({ onLogin }: LoginPageProps) {
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>
+          {mensagem && <div className="message warning">{mensagem}</div>}
+
           <label>
             <span>E-mail</span>
             <input

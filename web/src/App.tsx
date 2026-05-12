@@ -4,7 +4,12 @@ import {
   me,
   type UsuarioAutenticado
 } from "./api/auth";
-import { clearAuthToken, getAuthToken, setAuthToken } from "./api/client";
+import {
+  clearAuthToken,
+  getAuthToken,
+  setAuthToken,
+  setUnauthorizedHandler
+} from "./api/client";
 import { EmpresasPage } from "./components/EmpresasPage";
 import { LoginPage } from "./components/LoginPage";
 import { RecalculosPage } from "./components/RecalculosPage";
@@ -37,6 +42,28 @@ export default function App() {
   const [isVerificandoSessao, setIsVerificandoSessao] = useState(() =>
     Boolean(getAuthToken())
   );
+  const [mensagemLogin, setMensagemLogin] = useState<string | null>(null);
+
+  useEffect(() => {
+    let ativo = true;
+
+    setUnauthorizedHandler(() => {
+      if (!ativo) {
+        return;
+      }
+
+      clearAuthToken();
+      localStorage.removeItem(AUTH_USER_STORAGE_KEY);
+      setUsuario(null);
+      setAbaAtual("empresas");
+      setMensagemLogin("Sua sessão expirou. Faça login novamente.");
+    });
+
+    return () => {
+      ativo = false;
+      setUnauthorizedHandler(null);
+    };
+  }, []);
 
   useEffect(() => {
     const token = getAuthToken();
@@ -86,6 +113,7 @@ export default function App() {
     localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(usuarioAutenticado));
     setUsuario(usuarioAutenticado);
     setAbaAtual("empresas");
+    setMensagemLogin(null);
   }
 
   async function handleLogout() {
@@ -98,6 +126,7 @@ export default function App() {
       localStorage.removeItem(AUTH_USER_STORAGE_KEY);
       setUsuario(null);
       setAbaAtual("empresas");
+      setMensagemLogin(null);
     }
   }
 
@@ -110,7 +139,7 @@ export default function App() {
   }
 
   if (!usuario) {
-    return <LoginPage onLogin={handleLogin} />;
+    return <LoginPage mensagem={mensagemLogin} onLogin={handleLogin} />;
   }
 
   return (

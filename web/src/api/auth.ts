@@ -14,6 +14,7 @@ export type LoginResponse = {
 export async function login(email: string, senha: string) {
   return apiRequest<LoginResponse>("/auth/login", {
     method: "POST",
+    skipUnauthorizedHandler: true,
     body: JSON.stringify({
       email,
       senha
@@ -28,7 +29,8 @@ export async function me() {
 export async function logout() {
   try {
     return await apiRequest<{ ok: true }>("/auth/logout", {
-      method: "POST"
+      method: "POST",
+      skipUnauthorizedHandler: true
     });
   } finally {
     clearAuthToken();
