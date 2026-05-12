@@ -1,17 +1,22 @@
+import { createReadStream } from "node:fs";
 import type { FastifyInstance } from "fastify";
-import { handleRouteError } from "../../lib/http-error.js";
+import { MAX_EVIDENCIA_BYTES } from "../../lib/evidencias-storage.js";
+import { handleRouteError, HttpError } from "../../lib/http-error.js";
 import {
+  anexarEvidenciaRecalculo,
   cancelarRecalculo,
   criarRecalculo,
   detalharRecalculo,
   editarRecalculo,
-  listarRecalculos
+  listarRecalculos,
+  obterArquivoEvidencia
 } from "./recalculos.service.js";
 import {
   cancelarRecalculoBodySchema,
   criarRecalculoBodySchema,
   criarRecalculoHeadersSchema,
   editarRecalculoBodySchema,
+  evidenciaParamsSchema,
   listarRecalculosQuerySchema,
   recalculoParamsSchema
 } from "./recalculos.schemas.js";
@@ -72,6 +77,73 @@ export async function recalculosRoutes(app: FastifyInstance) {
       const body = cancelarRecalculoBodySchema.parse(request.body);
 
       return await cancelarRecalculo(headers["x-user-id"], params.id, body);
+    } catch (error) {
+      return handleRouteError(error, reply, request.log);
+    }
+  });
+
+  app.post("/recalculos/:id/evidencias", async (request, reply) => {
+    try {
+      const params = recalculoParamsSchema.parse(request.params);
+      const headers = criarRecalculoHeadersSchema.parse({
+        "x-user-id": request.headers["x-user-id"]
+      });
+
+      const file = await request.file({
+        limits: {
+          fileSize: MAX_EVIDENCIA_BYTES,
+          files: 1
+        }
+      });
+
+      if (!file) {
+        throw new HttpError(400, "Envie um arquivo de evidencia.");
+      }
+
+      if (file.fieldname !== "arquivo") {
+        throw new HttpError(400, "Envie o arquivo no campo multipart 'arquivo'.");
+      }
+
+      let buffer: Buffer;
+
+      try {
+        buffer = await file.toBuffer();
+      } catch {
+        throw new HttpError(400, "Arquivo excede o limite de 5 MB.");
+      }
+
+      const evidencia = await anexarEvidenciaRecalculo(
+        headers["x-user-id"],
+        params.id,
+        {
+          nomeArquivo: file.filename,
+          tipoArquivo: file.mimetype.toLowerCase(),
+          buffer
+        }
+      );
+
+      return reply.status(201).send(evidencia);
+    } catch (error) {
+      return handleRouteError(error, reply, request.log);
+    }
+  });
+
+  app.get("/evidencias/:id/arquivo", async (request, reply) => {
+    try {
+      const params = evidenciaParamsSchema.parse(request.params);
+      const headers = criarRecalculoHeadersSchema.parse({
+        "x-user-id": request.headers["x-user-id"]
+      });
+      const { evidencia, caminhoAbsoluto } = await obterArquivoEvidencia(
+        headers["x-user-id"],
+        params.id
+      );
+      const nomeArquivoSeguro = evidencia.nomeArquivo.replace(/["\r\n]/g, "_");
+
+      return reply
+        .type(evidencia.tipoArquivo)
+        .header("Content-Disposition", `inline; filename="${nomeArquivoSeguro}"`)
+        .send(createReadStream(caminhoAbsoluto));
     } catch (error) {
       return handleRouteError(error, reply, request.log);
     }

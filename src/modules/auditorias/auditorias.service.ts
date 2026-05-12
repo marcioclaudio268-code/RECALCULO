@@ -105,6 +105,39 @@ export async function registrarCancelamentoRecalculo(
   });
 }
 
+type RegistrarAnexoEvidenciaRecalculoParams = {
+  usuarioId: string;
+  recalculoId: string;
+  evidencia: {
+    id: string;
+    nomeArquivo: string;
+    tipoArquivo: string;
+    tamanhoArquivo: number;
+  };
+};
+
+export async function registrarAnexoEvidenciaRecalculo(
+  client: AuditoriaClient,
+  params: RegistrarAnexoEvidenciaRecalculoParams
+) {
+  return client.auditoria.create({
+    data: {
+      usuarioId: params.usuarioId,
+      entidade: EntidadeAuditoria.RECALCULO_GUIA,
+      entidadeId: params.recalculoId,
+      acao: AcaoAuditoria.ANEXO_ADICIONADO,
+      campoAlterado: "evidencias",
+      valorAnterior: null,
+      valorNovo: JSON.stringify({
+        evidenciaId: params.evidencia.id,
+        nomeArquivo: params.evidencia.nomeArquivo,
+        tipoArquivo: params.evidencia.tipoArquivo,
+        tamanhoArquivo: params.evidencia.tamanhoArquivo
+      })
+    }
+  });
+}
+
 type RegistrarImportacaoEmpresasParams = {
   usuarioId: string;
   importacaoId: string;

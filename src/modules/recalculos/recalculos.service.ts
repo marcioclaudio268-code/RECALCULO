@@ -1,11 +1,18 @@
 import { prisma } from "../../lib/prisma.js";
 import { HttpError } from "../../lib/http-error.js";
 import {
+  garantirArquivoEvidenciaExiste,
+  removerArquivoEvidencia,
+  resolverCaminhoEvidencia,
+  salvarArquivoEvidencia
+} from "../../lib/evidencias-storage.js";
+import {
   EntidadeAuditoria,
   StatusRecalculo,
   type Prisma
 } from "../../generated/prisma/client.js";
 import {
+  registrarAnexoEvidenciaRecalculo,
   registrarCancelamentoRecalculo,
   registrarCriacaoRecalculo,
   registrarEdicaoRecalculo
@@ -30,6 +37,18 @@ const usuarioResumoSelect = {
   nome: true,
   email: true
 } satisfies Prisma.UsuarioSelect;
+
+const evidenciaDetalheSelect = {
+  id: true,
+  nomeArquivo: true,
+  tipoArquivo: true,
+  tamanhoArquivo: true,
+  enviadoPorId: true,
+  createdAt: true,
+  enviadoPor: {
+    select: usuarioResumoSelect
+  }
+} satisfies Prisma.EvidenciaSolicitacaoSelect;
 
 function mapRecalculoListagem(
   recalculo: Prisma.RecalculoGuiaGetPayload<{
@@ -90,6 +109,7 @@ const recalculoDetalheInclude = {
     select: usuarioResumoSelect
   },
   evidencias: {
+    select: evidenciaDetalheSelect,
     orderBy: {
       createdAt: "asc"
     }
@@ -98,6 +118,12 @@ const recalculoDetalheInclude = {
 
 type RecalculoAtual = Prisma.RecalculoGuiaGetPayload<object>;
 type CampoEditavelRecalculo = keyof EditarRecalculoBody;
+
+type AnexarEvidenciaInput = {
+  nomeArquivo: string;
+  tipoArquivo: string;
+  buffer: Buffer;
+};
 
 function converterDataFiltro(value: string, fimDoDia = false) {
   const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
@@ -414,6 +440,108 @@ export async function cancelarRecalculo(
   });
 
   return detalharRecalculo(id);
+}
+
+export async function anexarEvidenciaRecalculo(
+  usuarioId: string,
+  recalculoId: string,
+  input: AnexarEvidenciaInput
+) {
+  const [usuarioEnvio, recalculo] = await Promise.all([
+    buscarUsuarioAtivo(usuarioId),
+    prisma.recalculoGuia.findUnique({
+      where: {
+        id: recalculoId
+      },
+      select: {
+        id: true,
+        status: true
+      }
+    })
+  ]);
+
+  if (!usuarioEnvio) {
+    throw new HttpError(404, "Usuario do header x-user-id nao encontrado ou inativo.");
+  }
+
+  if (!recalculo) {
+    throw new HttpError(404, "Recalculo nao encontrado.");
+  }
+
+  if (recalculo.status === StatusRecalculo.CANCELADO) {
+    throw new HttpError(409, "Nao e permitido anexar evidencia em recalculo cancelado.");
+  }
+
+  const arquivoSalvo = await salvarArquivoEvidencia({
+    recalculoId,
+    nomeArquivo: input.nomeArquivo,
+    tipoArquivo: input.tipoArquivo,
+    buffer: input.buffer
+  });
+
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const evidencia = await tx.evidenciaSolicitacao.create({
+        data: {
+          recalculoId,
+          nomeArquivo: input.nomeArquivo,
+          caminhoArquivo: arquivoSalvo.caminhoRelativo,
+          tipoArquivo: input.tipoArquivo,
+          tamanhoArquivo: input.buffer.length,
+          enviadoPorId: usuarioId
+        },
+        select: evidenciaDetalheSelect
+      });
+
+      await registrarAnexoEvidenciaRecalculo(tx, {
+        usuarioId,
+        recalculoId,
+        evidencia: {
+          id: evidencia.id,
+          nomeArquivo: evidencia.nomeArquivo,
+          tipoArquivo: evidencia.tipoArquivo,
+          tamanhoArquivo: evidencia.tamanhoArquivo
+        }
+      });
+
+      return evidencia;
+    });
+  } catch (error) {
+    await removerArquivoEvidencia(arquivoSalvo.caminhoRelativo).catch(() => undefined);
+    throw error;
+  }
+}
+
+export async function obterArquivoEvidencia(usuarioId: string, evidenciaId: string) {
+  const usuario = await buscarUsuarioAtivo(usuarioId);
+
+  if (!usuario) {
+    throw new HttpError(404, "Usuario do header x-user-id nao encontrado ou inativo.");
+  }
+
+  const evidencia = await prisma.evidenciaSolicitacao.findUnique({
+    where: {
+      id: evidenciaId
+    },
+    select: {
+      id: true,
+      nomeArquivo: true,
+      caminhoArquivo: true,
+      tipoArquivo: true
+    }
+  });
+
+  if (!evidencia) {
+    throw new HttpError(404, "Evidencia nao encontrada.");
+  }
+
+  const caminhoAbsoluto = resolverCaminhoEvidencia(evidencia.caminhoArquivo);
+  await garantirArquivoEvidenciaExiste(caminhoAbsoluto);
+
+  return {
+    evidencia,
+    caminhoAbsoluto
+  };
 }
 
 export async function criarRecalculo(usuarioId: string, input: CriarRecalculoBody) {

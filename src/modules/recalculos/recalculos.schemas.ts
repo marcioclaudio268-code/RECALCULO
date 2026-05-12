@@ -80,6 +80,10 @@ export const recalculoParamsSchema = z.object({
   id: z.string().uuid()
 });
 
+export const evidenciaParamsSchema = z.object({
+  id: z.string().uuid()
+});
+
 export const editarRecalculoBodySchema = z
   .object({
     tipoGuia: z.enum(tipoGuiaValues).optional(),

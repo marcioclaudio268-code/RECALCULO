@@ -194,6 +194,36 @@ A tela inicial tem abas simples, sem React Router:
 
 Enquanto o login real não existe, informe no topo da tela o ID temporário do usuário `Admin Local`; esse valor é salvo apenas no `localStorage` do navegador e enviado como `x-user-id`. O mesmo ID é usado como `responsavelId` nesta primeira versão.
 
+## Etapa 7 — Evidências/prints opcionais
+
+O detalhe do recálculo permite anexar prints opcionais da solicitação, como WhatsApp, e-mail ou mensagem equivalente. A guia recalculada em si não deve ser anexada nem armazenada no sistema.
+
+Regras atuais:
+
+- evidência é opcional; o recálculo continua válido sem anexo
+- somente imagens são aceitas: PNG, JPG, JPEG e WEBP
+- PDF, planilhas, documentos e executáveis são bloqueados
+- limite máximo de 5 MB por arquivo
+- arquivos ficam em `storage/evidencias-solicitacao/`
+- a pasta `storage/` não vai para o GitHub
+- envio de evidência cria auditoria automaticamente
+- `x-user-id` ainda é temporário até o login real
+
+Rotas de evidência:
+
+```http
+POST /recalculos/:id/evidencias
+x-user-id: <id do usuário>
+Content-Type: multipart/form-data
+
+arquivo=<imagem png/jpg/jpeg/webp>
+```
+
+```http
+GET /evidencias/:id/arquivo
+x-user-id: <id do usuário>
+```
+
 ## Rotas iniciais da API
 
 Healthcheck:
@@ -304,7 +334,6 @@ Regras contempladas na modelagem:
 
 - login/autenticação completa
 - upload/importação de planilhas CSV/Excel via tela
-- upload e armazenamento físico de prints/evidências
 - exportação de relatório Excel
 - auditoria automática completa para todas as ações do sistema
 - backups automatizados

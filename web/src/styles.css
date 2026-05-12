@@ -440,6 +440,26 @@ tr:last-child td {
   margin: 0 0 10px;
 }
 
+.section-note {
+  margin-bottom: 12px;
+}
+
+.evidence-upload {
+  align-items: end;
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.evidence-upload label {
+  color: #34424e;
+  display: grid;
+  font-size: 13px;
+  font-weight: 800;
+  gap: 6px;
+}
+
 .edit-form {
   border: 1px solid #d7dde2;
   border-radius: 8px;
@@ -547,5 +567,9 @@ tr:last-child td {
   .filter-actions,
   .edit-form-actions {
     flex-direction: column;
+  }
+
+  .evidence-upload {
+    grid-template-columns: 1fr;
   }
 }

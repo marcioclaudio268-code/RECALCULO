@@ -1,12 +1,15 @@
-import { FormEvent, useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import {
   AuditoriaDetalhe,
   EditarRecalculoInput,
+  EvidenciaDetalhe,
   RecalculoDetalhe as RecalculoDetalheType,
   TipoGuia,
+  baixarArquivoEvidencia,
   cancelarRecalculo,
   detalharRecalculo,
   editarRecalculo,
+  enviarEvidenciaRecalculo,
   tiposGuia
 } from "../api/recalculos";
 
@@ -31,6 +34,15 @@ type Mensagem = {
   tipo: "success" | "warning" | "error";
   texto: string;
 };
+
+const TAMANHO_MAXIMO_EVIDENCIA = 5 * 1024 * 1024;
+const tiposEvidenciaAceitos = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "image/webp"
+]);
+const extensoesEvidenciaAceitas = [".png", ".jpg", ".jpeg", ".webp"];
 
 const statusLabels: Record<string, string> = {
   LANCADO: "Lançado",
@@ -105,6 +117,23 @@ function formatarTamanhoArquivo(bytes: number) {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
+function validarArquivoEvidenciaFrontend(file: File) {
+  const nome = file.name.toLowerCase();
+  const extensaoValida = extensoesEvidenciaAceitas.some((extensao) =>
+    nome.endsWith(extensao)
+  );
+
+  if (!tiposEvidenciaAceitos.has(file.type) || !extensaoValida) {
+    return "Envie apenas imagens PNG, JPG, JPEG ou WEBP.";
+  }
+
+  if (file.size > TAMANHO_MAXIMO_EVIDENCIA) {
+    return "Arquivo excede o limite de 5 MB.";
+  }
+
+  return null;
+}
+
 function formatarValorAuditoria(value: string | null) {
   if (!value) {
     return "-";
@@ -126,6 +155,17 @@ function obterUsuarioAuditoria(auditoria: AuditoriaDetalhe) {
   }
 
   return nome || email || auditoria.usuarioId || "-";
+}
+
+function obterUsuarioEvidencia(evidencia: EvidenciaDetalhe) {
+  const nome = evidencia.enviadoPor?.nome?.trim();
+  const email = evidencia.enviadoPor?.email?.trim();
+
+  if (nome && email) {
+    return `${nome} (${email})`;
+  }
+
+  return nome || email || evidencia.enviadoPorId || "-";
 }
 
 function toDateInputValue(value?: string | null) {
@@ -223,8 +263,12 @@ export function RecalculoDetalhe({
   const [modoEdicao, setModoEdicao] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [evidenciaAbrindoId, setEvidenciaAbrindoId] = useState<string | null>(null);
+  const [arquivoEvidencia, setArquivoEvidencia] = useState<File | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [mensagem, setMensagem] = useState<Mensagem | null>(null);
+  const evidenciaInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!recalculoId) {
@@ -233,6 +277,8 @@ export function RecalculoDetalhe({
       setModoEdicao(false);
       setErro(null);
       setMensagem(null);
+      setArquivoEvidencia(null);
+      setEvidenciaAbrindoId(null);
       return;
     }
 
@@ -244,6 +290,7 @@ export function RecalculoDetalhe({
       setErro(null);
       setMensagem(null);
       setModoEdicao(false);
+      setArquivoEvidencia(null);
 
       try {
         const data = await detalharRecalculo(id);
@@ -410,6 +457,126 @@ export function RecalculoDetalhe({
       });
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  function handleSelecionarEvidencia(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null;
+    setArquivoEvidencia(file);
+
+    if (file) {
+      const erroArquivo = validarArquivoEvidenciaFrontend(file);
+
+      if (erroArquivo) {
+        setMensagem({ tipo: "error", texto: erroArquivo });
+      } else {
+        setMensagem(null);
+      }
+    }
+  }
+
+  async function handleEnviarEvidencia(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!recalculo) {
+      return;
+    }
+
+    if (estaCancelado) {
+      setMensagem({
+        tipo: "error",
+        texto: "Nao e permitido anexar evidencia em recalculo cancelado."
+      });
+      return;
+    }
+
+    if (!userId) {
+      setMensagem({
+        tipo: "error",
+        texto: "Informe o ID temporario do usuario antes de anexar evidencia."
+      });
+      return;
+    }
+
+    if (!arquivoEvidencia) {
+      setMensagem({ tipo: "error", texto: "Selecione um arquivo de evidencia." });
+      return;
+    }
+
+    const erroArquivo = validarArquivoEvidenciaFrontend(arquivoEvidencia);
+
+    if (erroArquivo) {
+      setMensagem({ tipo: "error", texto: erroArquivo });
+      return;
+    }
+
+    setIsUploading(true);
+    setMensagem(null);
+
+    try {
+      await enviarEvidenciaRecalculo(userId, recalculo.id, arquivoEvidencia);
+      const atualizado = await detalharRecalculo(recalculo.id);
+
+      setRecalculo(atualizado);
+      setForm(montarForm(atualizado));
+      setArquivoEvidencia(null);
+
+      if (evidenciaInputRef.current) {
+        evidenciaInputRef.current.value = "";
+      }
+
+      setMensagem({
+        tipo: "success",
+        texto: "Evidencia anexada com sucesso."
+      });
+      onRecalculoAtualizado();
+    } catch (error) {
+      setMensagem({
+        tipo: "error",
+        texto:
+          error instanceof Error ? error.message : "Erro ao anexar evidencia."
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
+  async function handleAbrirEvidencia(evidencia: EvidenciaDetalhe) {
+    if (!userId) {
+      setMensagem({
+        tipo: "error",
+        texto: "Informe o ID temporario do usuario para abrir a evidencia."
+      });
+      return;
+    }
+
+    const novaJanela = window.open("", "_blank", "noopener,noreferrer");
+    setEvidenciaAbrindoId(evidencia.id);
+    setMensagem(null);
+
+    try {
+      const blob = await baixarArquivoEvidencia(userId, evidencia.id);
+      const url = URL.createObjectURL(blob);
+
+      if (novaJanela) {
+        novaJanela.location.href = url;
+      } else {
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = evidencia.nomeArquivo;
+        link.click();
+      }
+
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (error) {
+      novaJanela?.close();
+      setMensagem({
+        tipo: "error",
+        texto:
+          error instanceof Error ? error.message : "Erro ao abrir evidencia."
+      });
+    } finally {
+      setEvidenciaAbrindoId(null);
     }
   }
 
@@ -675,6 +842,31 @@ export function RecalculoDetalhe({
 
       <section className="detail-section">
         <h3>Evidências</h3>
+        <p className="section-note">
+          Anexe apenas print da solicitação do recálculo. Não anexe a guia
+          recalculada.
+        </p>
+        {estaCancelado ? (
+          <div className="message warning">
+            Recálculo cancelado não aceita novas evidências.
+          </div>
+        ) : (
+          <form className="evidence-upload" onSubmit={handleEnviarEvidencia}>
+            <label>
+              <span>Print da solicitação</span>
+              <input
+                ref={evidenciaInputRef}
+                type="file"
+                accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
+                onChange={handleSelecionarEvidencia}
+                disabled={isUploading}
+              />
+            </label>
+            <button type="submit" disabled={isUploading || !arquivoEvidencia}>
+              {isUploading ? "Anexando..." : "Anexar evidência"}
+            </button>
+          </form>
+        )}
         {recalculo.evidencias.length === 0 ? (
           <p>Nenhuma evidência anexada.</p>
         ) : (
@@ -686,6 +878,8 @@ export function RecalculoDetalhe({
                   <th>Tipo</th>
                   <th>Tamanho</th>
                   <th>Enviado em</th>
+                  <th>Enviado por</th>
+                  <th>Ação</th>
                 </tr>
               </thead>
               <tbody>
@@ -695,6 +889,19 @@ export function RecalculoDetalhe({
                     <td>{evidencia.tipoArquivo}</td>
                     <td>{formatarTamanhoArquivo(evidencia.tamanhoArquivo)}</td>
                     <td>{formatarDataHora(evidencia.createdAt)}</td>
+                    <td>{obterUsuarioEvidencia(evidencia)}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="button-secondary button-compact"
+                        onClick={() => handleAbrirEvidencia(evidencia)}
+                        disabled={evidenciaAbrindoId === evidencia.id}
+                      >
+                        {evidenciaAbrindoId === evidencia.id
+                          ? "Abrindo..."
+                          : "Abrir/Baixar"}
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

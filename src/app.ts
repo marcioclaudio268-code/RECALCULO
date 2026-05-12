@@ -1,5 +1,6 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
+import multipart from "@fastify/multipart";
 import { empresasRoutes } from "./modules/empresas/empresas.routes.js";
 import { recalculosRoutes } from "./modules/recalculos/recalculos.routes.js";
 
@@ -13,6 +14,8 @@ export function buildApp() {
     methods: ["GET", "POST", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "x-user-id"]
   });
+
+  app.register(multipart);
 
   app.get("/health", async () => ({
     status: "ok"
