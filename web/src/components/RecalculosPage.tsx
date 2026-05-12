@@ -8,9 +8,9 @@ import {
   statusRecalculo,
   tiposGuia
 } from "../api/recalculos";
-import { RecalculoDetalhe } from "./RecalculoDetalhe";
 
 type FiltrosRecalculos = {
+  busca: string;
   competencia: string;
   tipoGuia: TipoGuia | "";
   status: StatusRecalculo | "";
@@ -19,7 +19,12 @@ type FiltrosRecalculos = {
   limit: number;
 };
 
+type RecalculosPageProps = {
+  onVerDetalhe: (recalculoId: string) => void;
+};
+
 const filtrosIniciais: FiltrosRecalculos = {
+  busca: "",
   competencia: "",
   tipoGuia: "",
   status: "",
@@ -29,8 +34,8 @@ const filtrosIniciais: FiltrosRecalculos = {
 };
 
 const statusLabels: Record<StatusRecalculo, string> = {
-  LANCADO: "Lançado",
-  EM_REVISAO: "Em revisão",
+  LANCADO: "Lancado",
+  EM_REVISAO: "Em revisao",
   FINALIZADO: "Finalizado",
   CANCELADO: "Cancelado"
 };
@@ -71,18 +76,19 @@ function formatarDocumento(documento?: string | null) {
 
 function evidenciaTexto(recalculo: RecalculoListItem) {
   if (!recalculo.temEvidencia) {
-    return "Sem evidência";
+    return "Sem evidencia";
   }
 
   if (recalculo.quantidadeEvidencias > 0) {
-    return `Com evidência (${recalculo.quantidadeEvidencias})`;
+    return `Com evidencia (${recalculo.quantidadeEvidencias})`;
   }
 
-  return "Com evidência";
+  return "Com evidencia";
 }
 
 function montarParams(filtros: FiltrosRecalculos): ListarRecalculosParams {
   return {
+    busca: filtros.busca.trim(),
     competencia: filtros.competencia,
     tipoGuia: filtros.tipoGuia,
     status: filtros.status,
@@ -92,14 +98,11 @@ function montarParams(filtros: FiltrosRecalculos): ListarRecalculosParams {
   };
 }
 
-export function RecalculosPage() {
+export function RecalculosPage({ onVerDetalhe }: RecalculosPageProps) {
   const [filtros, setFiltros] = useState<FiltrosRecalculos>(filtrosIniciais);
   const [filtrosAplicados, setFiltrosAplicados] =
     useState<FiltrosRecalculos>(filtrosIniciais);
   const [recalculos, setRecalculos] = useState<RecalculoListItem[]>([]);
-  const [recalculoSelecionadoId, setRecalculoSelecionadoId] = useState<
-    string | null
-  >(null);
   const [isLoading, setIsLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -115,9 +118,7 @@ export function RecalculosPage() {
       const data = await listarRecalculos(montarParams(filtrosParaBusca));
       setRecalculos(data);
     } catch (error) {
-      setErro(
-        error instanceof Error ? error.message : "Erro ao carregar recálculos."
-      );
+      setErro(error instanceof Error ? error.message : "Erro ao carregar recalculos.");
     } finally {
       setIsLoading(false);
     }
@@ -133,16 +134,12 @@ export function RecalculosPage() {
     setFiltrosAplicados(filtrosIniciais);
   }
 
-  function handleRecalculoAtualizado() {
-    carregarRecalculos(filtrosAplicados);
-  }
-
   const quantidadeTexto = useMemo(() => {
     if (isLoading) {
-      return "Carregando recálculos...";
+      return "Carregando recalculos...";
     }
 
-    return `${recalculos.length} recálculo${
+    return `${recalculos.length} recalculo${
       recalculos.length === 1 ? "" : "s"
     } exibido${recalculos.length === 1 ? "" : "s"}`;
   }, [isLoading, recalculos.length]);
@@ -152,111 +149,133 @@ export function RecalculosPage() {
       <div className="recalculos-area">
         <div className="section-heading">
           <div>
-            <h2>Recálculos</h2>
-            <p>Consulte lançamentos e veja a auditoria de cada registro.</p>
+            <h2>Recalculos</h2>
+            <p>Consulte lancamentos e abra o detalhe de cada registro.</p>
           </div>
           <span className="counter">{quantidadeTexto}</span>
         </div>
 
         <form className="recalculos-filter-row" onSubmit={handleBuscar}>
-          <label>
-            <span>Competência</span>
-            <input
-              type="month"
-              value={filtros.competencia}
-              onChange={(event) =>
-                setFiltros((current) => ({
-                  ...current,
-                  competencia: event.target.value
-                }))
-              }
-            />
-          </label>
-          <label>
-            <span>Tipo de guia</span>
-            <select
-              value={filtros.tipoGuia}
-              onChange={(event) =>
-                setFiltros((current) => ({
-                  ...current,
-                  tipoGuia: event.target.value as TipoGuia | ""
-                }))
-              }
-            >
-              <option value="">Todos</option>
-              {tiposGuia.map((tipo) => (
-                <option key={tipo} value={tipo}>
-                  {tipo}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span>Status</span>
-            <select
-              value={filtros.status}
-              onChange={(event) =>
-                setFiltros((current) => ({
-                  ...current,
-                  status: event.target.value as StatusRecalculo | ""
-                }))
-              }
-            >
-              <option value="">Todos</option>
-              {statusRecalculo.map((status) => (
-                <option key={status} value={status}>
-                  {statusLabels[status]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span>Data inicial</span>
-            <input
-              type="date"
-              value={filtros.dataInicio}
-              onChange={(event) =>
-                setFiltros((current) => ({
-                  ...current,
-                  dataInicio: event.target.value
-                }))
-              }
-            />
-          </label>
-          <label>
-            <span>Data final</span>
-            <input
-              type="date"
-              value={filtros.dataFim}
-              onChange={(event) =>
-                setFiltros((current) => ({
-                  ...current,
-                  dataFim: event.target.value
-                }))
-              }
-            />
-          </label>
-          <label>
-            <span>Limite</span>
-            <select
-              value={filtros.limit}
-              onChange={(event) =>
-                setFiltros((current) => ({
-                  ...current,
-                  limit: Number(event.target.value)
-                }))
-              }
-            >
-              <option value={20}>20</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-            </select>
-          </label>
-          <div className="filter-actions">
-            <button type="submit">Buscar</button>
-            <button type="button" className="button-secondary" onClick={handleLimpar}>
-              Limpar filtros
-            </button>
+          <div className="filters-primary">
+            <label className="filter-search">
+              <span>Buscar</span>
+              <input
+                value={filtros.busca}
+                placeholder="Empresa, codigo, CNPJ ou descricao"
+                onChange={(event) =>
+                  setFiltros((current) => ({
+                    ...current,
+                    busca: event.target.value
+                  }))
+                }
+              />
+            </label>
+            <label className="filter-limit">
+              <span>Limite</span>
+              <select
+                value={filtros.limit}
+                onChange={(event) =>
+                  setFiltros((current) => ({
+                    ...current,
+                    limit: Number(event.target.value)
+                  }))
+                }
+              >
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </label>
+            <div className="filter-actions">
+              <button type="submit">Buscar</button>
+              <button
+                type="button"
+                className="button-secondary"
+                onClick={handleLimpar}
+              >
+                Limpar filtros
+              </button>
+            </div>
+          </div>
+
+          <div className="filters-secondary">
+            <label>
+              <span>Competencia</span>
+              <input
+                type="month"
+                value={filtros.competencia}
+                onChange={(event) =>
+                  setFiltros((current) => ({
+                    ...current,
+                    competencia: event.target.value
+                  }))
+                }
+              />
+            </label>
+            <label>
+              <span>Tipo de guia</span>
+              <select
+                value={filtros.tipoGuia}
+                onChange={(event) =>
+                  setFiltros((current) => ({
+                    ...current,
+                    tipoGuia: event.target.value as TipoGuia | ""
+                  }))
+                }
+              >
+                <option value="">Todos</option>
+                {tiposGuia.map((tipo) => (
+                  <option key={tipo} value={tipo}>
+                    {tipo}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>Status</span>
+              <select
+                value={filtros.status}
+                onChange={(event) =>
+                  setFiltros((current) => ({
+                    ...current,
+                    status: event.target.value as StatusRecalculo | ""
+                  }))
+                }
+              >
+                <option value="">Todos</option>
+                {statusRecalculo.map((status) => (
+                  <option key={status} value={status}>
+                    {statusLabels[status]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>Data inicial</span>
+              <input
+                type="date"
+                value={filtros.dataInicio}
+                onChange={(event) =>
+                  setFiltros((current) => ({
+                    ...current,
+                    dataInicio: event.target.value
+                  }))
+                }
+              />
+            </label>
+            <label>
+              <span>Data final</span>
+              <input
+                type="date"
+                value={filtros.dataFim}
+                onChange={(event) =>
+                  setFiltros((current) => ({
+                    ...current,
+                    dataFim: event.target.value
+                  }))
+                }
+              />
+            </label>
           </div>
         </form>
 
@@ -267,26 +286,21 @@ export function RecalculosPage() {
             <thead>
               <tr>
                 <th>Empresa</th>
-                <th>Código</th>
+                <th>Codigo</th>
                 <th>Documento</th>
                 <th>Guia</th>
-                <th>Competência</th>
-                <th>Descrição</th>
-                <th>Data do recálculo</th>
-                <th>Responsável</th>
+                <th>Competencia</th>
+                <th>Descricao</th>
+                <th>Data do recalculo</th>
+                <th>Responsavel</th>
                 <th>Status</th>
-                <th>Evidência</th>
-                <th>Ação</th>
+                <th>Evidencia</th>
+                <th>Acao</th>
               </tr>
             </thead>
             <tbody>
               {recalculos.map((recalculo) => (
-                <tr
-                  key={recalculo.id}
-                  className={
-                    recalculoSelecionadoId === recalculo.id ? "selected-row" : ""
-                  }
-                >
+                <tr key={recalculo.id}>
                   <td>{recalculo.empresa.nome}</td>
                   <td>{recalculo.empresa.codigoEmpresa}</td>
                   <td>{formatarDocumento(recalculo.empresa.documento)}</td>
@@ -305,7 +319,7 @@ export function RecalculosPage() {
                     <button
                       type="button"
                       className="button-compact"
-                      onClick={() => setRecalculoSelecionadoId(recalculo.id)}
+                      onClick={() => onVerDetalhe(recalculo.id)}
                     >
                       Ver detalhe
                     </button>
@@ -315,7 +329,7 @@ export function RecalculosPage() {
               {!isLoading && recalculos.length === 0 && (
                 <tr>
                   <td colSpan={11} className="empty-cell">
-                    Nenhum recálculo encontrado.
+                    Nenhum recalculo encontrado.
                   </td>
                 </tr>
               )}
@@ -323,11 +337,6 @@ export function RecalculosPage() {
           </table>
         </div>
       </div>
-
-      <RecalculoDetalhe
-        recalculoId={recalculoSelecionadoId}
-        onRecalculoAtualizado={handleRecalculoAtualizado}
-      />
     </section>
   );
 }

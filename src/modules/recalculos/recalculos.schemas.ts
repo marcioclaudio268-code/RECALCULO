@@ -43,6 +43,7 @@ const nullableOptionalTextSchema = z
   .optional();
 
 export const listarRecalculosQuerySchema = z.object({
+  busca: z.string().trim().min(1).optional(),
   empresaId: z.string().uuid().optional(),
   status: z.enum(statusRecalculoValues).optional(),
   tipoGuia: z.enum(tipoGuiaValues).optional(),

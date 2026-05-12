@@ -122,6 +122,7 @@ export type RecalculoDetalhe = {
 };
 
 export type ListarRecalculosParams = {
+  busca?: string;
   competencia?: string;
   tipoGuia?: TipoGuia | "";
   status?: StatusRecalculo | "";
@@ -186,6 +187,7 @@ function appendParam(params: URLSearchParams, key: string, value?: string | numb
 export async function listarRecalculos(params: ListarRecalculosParams = {}) {
   const searchParams = new URLSearchParams();
 
+  appendParam(searchParams, "busca", params.busca);
   appendParam(searchParams, "competencia", params.competencia);
   appendParam(searchParams, "tipoGuia", params.tipoGuia);
   appendParam(searchParams, "status", params.status);

@@ -1,17 +1,17 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Empresa, listarEmpresas } from "../api/empresas";
-import { RecalculoForm } from "./RecalculoForm";
 
-export function EmpresasPage() {
+type EmpresasPageProps = {
+  onLancarRecalculo: (empresa: Empresa) => void;
+};
+
+export function EmpresasPage({ onLancarRecalculo }: EmpresasPageProps) {
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [busca, setBusca] = useState("");
   const [buscaAplicada, setBuscaAplicada] = useState("");
   const [limit, setLimit] = useState(20);
   const [isLoading, setIsLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-  const [empresaSelecionada, setEmpresaSelecionada] = useState<Empresa | null>(
-    null
-  );
 
   useEffect(() => {
     carregarEmpresas(buscaAplicada, limit);
@@ -55,12 +55,12 @@ export function EmpresasPage() {
   }, [empresas.length, isLoading]);
 
   return (
-    <section className="workspace">
+    <section className="page-layout">
       <div className="companies-area">
         <div className="section-heading">
           <div>
             <h2>Empresas</h2>
-            <p>Busque por nome, código ou documento.</p>
+            <p>Busque por nome, codigo ou documento.</p>
           </div>
           <span className="counter">{quantidadeTexto}</span>
         </div>
@@ -69,7 +69,7 @@ export function EmpresasPage() {
           <input
             value={busca}
             onChange={(event) => setBusca(event.target.value)}
-            placeholder="Nome, código ou documento"
+            placeholder="Nome, codigo ou documento"
           />
           <select
             value={limit}
@@ -92,23 +92,18 @@ export function EmpresasPage() {
           <table>
             <thead>
               <tr>
-                <th>Código</th>
+                <th>Codigo</th>
                 <th>Nome</th>
                 <th>Documento</th>
                 <th>Tipo</th>
                 <th>Fantasia</th>
                 <th>Status</th>
-                <th>Ação</th>
+                <th>Acao</th>
               </tr>
             </thead>
             <tbody>
               {empresas.map((empresa) => (
-                <tr
-                  key={empresa.id}
-                  className={
-                    empresaSelecionada?.id === empresa.id ? "selected-row" : ""
-                  }
-                >
+                <tr key={empresa.id}>
                   <td>{empresa.codigoEmpresa}</td>
                   <td>{empresa.nome}</td>
                   <td>{empresa.documento}</td>
@@ -123,9 +118,9 @@ export function EmpresasPage() {
                     <button
                       type="button"
                       className="button-compact"
-                      onClick={() => setEmpresaSelecionada(empresa)}
+                      onClick={() => onLancarRecalculo(empresa)}
                     >
-                      Lançar recálculo
+                      Lancar recalculo
                     </button>
                   </td>
                 </tr>
@@ -141,10 +136,6 @@ export function EmpresasPage() {
           </table>
         </div>
       </div>
-
-      <aside className="form-area">
-        <RecalculoForm empresa={empresaSelecionada} />
-      </aside>
     </section>
   );
 }

@@ -142,6 +142,10 @@ function converterDataFiltro(value: string, fimDoDia = false) {
   return new Date(value);
 }
 
+function manterSomenteDigitos(value: string) {
+  return value.replace(/\D/g, "");
+}
+
 function serializarValorAuditoria(value: unknown) {
   if (value === null || value === undefined) {
     return null;
@@ -278,6 +282,43 @@ export async function listarRecalculos(query: ListarRecalculosQuery) {
       ...(query.dataInicio ? { gte: converterDataFiltro(query.dataInicio) } : {}),
       ...(query.dataFim ? { lte: converterDataFiltro(query.dataFim, true) } : {})
     };
+  }
+
+  if (query.busca) {
+    const busca = query.busca.trim();
+    const documentoBusca = manterSomenteDigitos(busca);
+
+    where.OR = [
+      {
+        descricao: {
+          contains: busca,
+          mode: "insensitive"
+        }
+      },
+      {
+        empresa: {
+          nome: {
+            contains: busca,
+            mode: "insensitive"
+          }
+        }
+      },
+      {
+        empresa: {
+          codigoEmpresa: {
+            contains: busca,
+            mode: "insensitive"
+          }
+        }
+      },
+      {
+        empresa: {
+          documento: {
+            contains: documentoBusca || busca
+          }
+        }
+      }
+    ];
   }
 
   const recalculos = await prisma.recalculoGuia.findMany({

@@ -190,6 +190,7 @@ small {
 
 .temporary-user span,
 .recalculo-form label,
+.launch-form label span,
 .recalculos-filter-row label span,
 .relatorios-form label span {
   color: #34424e;
@@ -203,6 +204,11 @@ small {
   gap: 24px;
   margin-top: 24px;
   align-items: start;
+}
+
+.page-layout,
+.detail-page-layout {
+  margin-top: 24px;
 }
 
 .companies-area,
@@ -252,16 +258,36 @@ small {
 }
 
 .recalculos-filter-row {
-  align-items: end;
   display: grid;
-  grid-template-columns: repeat(6, minmax(140px, 1fr)) minmax(230px, auto);
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 14px;
 }
 
 .recalculos-filter-row label {
   display: grid;
   gap: 6px;
+}
+
+.filters-primary {
+  align-items: end;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(280px, 1fr) 110px auto;
+}
+
+.filters-secondary {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(5, minmax(150px, 1fr));
+}
+
+.filter-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.filter-search {
+  min-width: 0;
 }
 
 .relatorios-form {
@@ -290,11 +316,6 @@ small {
 .relatorios-actions {
   display: flex;
   justify-content: flex-start;
-}
-
-.filter-actions {
-  display: flex;
-  gap: 10px;
 }
 
 .button-secondary {
@@ -431,9 +452,36 @@ tr:last-child td {
   gap: 12px;
 }
 
-.recalculo-form label {
+.recalculo-form label,
+.launch-form label {
   display: grid;
   gap: 6px;
+}
+
+.form-page-panel {
+  max-width: 980px;
+  position: static;
+}
+
+.launch-form {
+  display: grid;
+  gap: 14px;
+}
+
+.launch-form-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.launch-form-wide {
+  grid-column: span 3;
+}
+
+.post-submit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .message {
@@ -601,11 +649,20 @@ tr:last-child td {
     position: static;
   }
 
-  .recalculos-filter-row {
-    grid-template-columns: repeat(2, minmax(180px, 1fr));
+  .filters-primary {
+    grid-template-columns: minmax(220px, 1fr) 110px;
   }
 
   .filter-actions {
+    grid-column: span 2;
+  }
+
+  .filters-secondary,
+  .launch-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .launch-form-wide {
     grid-column: span 2;
   }
 
@@ -633,15 +690,19 @@ tr:last-child td {
   }
 
   .recalculos-filter-row,
+  .filters-primary,
+  .filters-secondary,
   .relatorios-form,
   .detail-grid,
-  .edit-form-grid {
+  .edit-form-grid,
+  .launch-form-grid {
     grid-template-columns: 1fr;
   }
 
   .filter-actions,
   .detail-grid-wide,
-  .edit-form-wide {
+  .edit-form-wide,
+  .launch-form-wide {
     grid-column: auto;
   }
 

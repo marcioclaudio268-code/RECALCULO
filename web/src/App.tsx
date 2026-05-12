@@ -10,12 +10,25 @@ import {
   setAuthToken,
   setUnauthorizedHandler
 } from "./api/client";
+import { type Empresa } from "./api/empresas";
 import { EmpresasPage } from "./components/EmpresasPage";
+import { LancarRecalculoPage } from "./components/LancarRecalculoPage";
 import { LoginPage } from "./components/LoginPage";
+import { RecalculoDetalhePage } from "./components/RecalculoDetalhePage";
 import { RecalculosPage } from "./components/RecalculosPage";
 import { RelatoriosPage } from "./components/RelatoriosPage";
 
 type AbaAtual = "empresas" | "recalculos" | "relatorios";
+type TelaAtual =
+  | { tipo: "empresas" }
+  | { tipo: "recalculos" }
+  | { tipo: "relatorios" }
+  | { tipo: "lancar-recalculo"; empresa: Empresa }
+  | {
+      tipo: "detalhe-recalculo";
+      recalculoId: string;
+      origem?: "empresas" | "recalculos";
+    };
 
 const AUTH_USER_STORAGE_KEY = "recalculo_guias_auth_user";
 
@@ -34,8 +47,20 @@ function carregarUsuarioSalvo() {
   }
 }
 
+function obterAbaAtiva(tela: TelaAtual): AbaAtual {
+  if (tela.tipo === "lancar-recalculo") {
+    return "empresas";
+  }
+
+  if (tela.tipo === "detalhe-recalculo") {
+    return tela.origem ?? "recalculos";
+  }
+
+  return tela.tipo;
+}
+
 export default function App() {
-  const [abaAtual, setAbaAtual] = useState<AbaAtual>("empresas");
+  const [telaAtual, setTelaAtual] = useState<TelaAtual>({ tipo: "empresas" });
   const [usuario, setUsuario] = useState<UsuarioAutenticado | null>(
     carregarUsuarioSalvo
   );
@@ -55,8 +80,8 @@ export default function App() {
       clearAuthToken();
       localStorage.removeItem(AUTH_USER_STORAGE_KEY);
       setUsuario(null);
-      setAbaAtual("empresas");
-      setMensagemLogin("Sua sessão expirou. Faça login novamente.");
+      setTelaAtual({ tipo: "empresas" });
+      setMensagemLogin("Sua sess\u00e3o expirou. Fa\u00e7a login novamente.");
     });
 
     return () => {
@@ -112,7 +137,7 @@ export default function App() {
     setAuthToken(token);
     localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(usuarioAutenticado));
     setUsuario(usuarioAutenticado);
-    setAbaAtual("empresas");
+    setTelaAtual({ tipo: "empresas" });
     setMensagemLogin(null);
   }
 
@@ -125,7 +150,7 @@ export default function App() {
       clearAuthToken();
       localStorage.removeItem(AUTH_USER_STORAGE_KEY);
       setUsuario(null);
-      setAbaAtual("empresas");
+      setTelaAtual({ tipo: "empresas" });
       setMensagemLogin(null);
     }
   }
@@ -142,6 +167,8 @@ export default function App() {
     return <LoginPage mensagem={mensagemLogin} onLogin={handleLogin} />;
   }
 
+  const abaAtual = obterAbaAtiva(telaAtual);
+
   return (
     <main className="app-shell">
       <header className="topbar">
@@ -152,7 +179,7 @@ export default function App() {
             <button
               type="button"
               className={abaAtual === "empresas" ? "tab-button active" : "tab-button"}
-              onClick={() => setAbaAtual("empresas")}
+              onClick={() => setTelaAtual({ tipo: "empresas" })}
             >
               Empresas
             </button>
@@ -161,7 +188,7 @@ export default function App() {
               className={
                 abaAtual === "recalculos" ? "tab-button active" : "tab-button"
               }
-              onClick={() => setAbaAtual("recalculos")}
+              onClick={() => setTelaAtual({ tipo: "recalculos" })}
             >
               {"Rec\u00e1lculos"}
             </button>
@@ -170,7 +197,7 @@ export default function App() {
               className={
                 abaAtual === "relatorios" ? "tab-button active" : "tab-button"
               }
-              onClick={() => setAbaAtual("relatorios")}
+              onClick={() => setTelaAtual({ tipo: "relatorios" })}
             >
               {"Relat\u00f3rios"}
             </button>
@@ -185,10 +212,44 @@ export default function App() {
         </div>
       </header>
 
-      {abaAtual === "empresas" ? (
-        <EmpresasPage />
-      ) : abaAtual === "recalculos" ? (
-        <RecalculosPage />
+      {telaAtual.tipo === "empresas" ? (
+        <EmpresasPage
+          onLancarRecalculo={(empresa) =>
+            setTelaAtual({ tipo: "lancar-recalculo", empresa })
+          }
+        />
+      ) : telaAtual.tipo === "lancar-recalculo" ? (
+        <LancarRecalculoPage
+          empresa={telaAtual.empresa}
+          onVoltar={() => setTelaAtual({ tipo: "empresas" })}
+          onVerDetalhe={(recalculoId) =>
+            setTelaAtual({
+              tipo: "detalhe-recalculo",
+              recalculoId,
+              origem: "empresas"
+            })
+          }
+        />
+      ) : telaAtual.tipo === "recalculos" ? (
+        <RecalculosPage
+          onVerDetalhe={(recalculoId) =>
+            setTelaAtual({
+              tipo: "detalhe-recalculo",
+              recalculoId,
+              origem: "recalculos"
+            })
+          }
+        />
+      ) : telaAtual.tipo === "detalhe-recalculo" ? (
+        <RecalculoDetalhePage
+          recalculoId={telaAtual.recalculoId}
+          onVoltar={() =>
+            setTelaAtual({
+              tipo: telaAtual.origem === "empresas" ? "empresas" : "recalculos"
+            })
+          }
+          onRecalculoAtualizado={() => undefined}
+        />
       ) : (
         <RelatoriosPage />
       )}
