@@ -7,12 +7,17 @@ import { recalculosRoutes } from "./modules/recalculos/recalculos.routes.js";
 import { relatoriosRoutes } from "./modules/relatorios/relatorios.routes.js";
 
 export function buildApp() {
+  const frontendOrigins = (process.env.FRONTEND_ORIGIN ?? "http://localhost:5173")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
   const app = Fastify({
     logger: true
   });
 
   app.register(cors, {
-    origin: ["http://localhost:5173"],
+    origin: frontendOrigins,
     methods: ["GET", "POST", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     exposedHeaders: ["Content-Disposition"]

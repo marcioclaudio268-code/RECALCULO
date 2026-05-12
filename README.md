@@ -13,7 +13,7 @@ Sistema interno para escritorio contabil em rede local. O objetivo e registrar s
 - Etapa 7 - Evidencias/prints opcionais: concluida
 - Etapa 8 - Relatorio mensal Excel: concluida
 - Etapa 9A - Login local e protecao total das rotas: concluida tecnicamente apos validacao
-- Etapa 10 - Preparacao para instalacao no escritorio: pendente
+- Etapa 10 - Preparacao para instalacao no escritorio: concluida tecnicamente
 
 ## Stack
 
@@ -59,6 +59,7 @@ DATABASE_URL="postgresql://postgres:postgres@localhost:5432/recalculo_guias?sche
 PORT=3001
 JWT_SECRET="troque-este-segredo-em-producao"
 JWT_EXPIRES_IN="8h"
+FRONTEND_ORIGIN="http://localhost:5173"
 ```
 
 Em ambiente real do escritorio, troque `JWT_SECRET` antes do uso. Em desenvolvimento, se `JWT_SECRET` nao estiver configurado, a API usa fallback local claro. Em `NODE_ENV=production`, a ausencia de `JWT_SECRET` causa falha.
@@ -118,6 +119,45 @@ URLs locais:
 
 - backend/API: `http://localhost:3001`
 - frontend: `http://localhost:5173`
+
+## Etapa 10 - Preparacao para instalacao no escritorio
+
+Documentos operacionais:
+
+- [Instalacao no escritorio](docs/INSTALACAO_ESCRITORIO.md)
+- [Operacao diaria](docs/OPERACAO_DIARIA.md)
+- [Backup e restauracao](docs/BACKUP_RESTAURACAO.md)
+- [Checklist de producao local](docs/CHECKLIST_PRODUCAO_LOCAL.md)
+
+Arquivos de exemplo:
+
+- `.env.production.example`
+- `web/.env.production.example`
+
+Scripts auxiliares para Windows:
+
+- `scripts/windows/start-api.ps1`
+- `scripts/windows/start-web.ps1`
+- `scripts/windows/check-health.ps1`
+- `scripts/windows/backup-db.ps1`
+- `scripts/windows/backup-storage.ps1`
+- `scripts/windows/backup-all.ps1`
+
+Comandos principais:
+
+```powershell
+npm install
+npm run prisma:generate
+npm run build
+npm run build --prefix web
+npm run start
+npm --prefix web run preview
+```
+
+Para acesso por outros computadores da rede, configure antes do build:
+
+- `.env`: `FRONTEND_ORIGIN="http://IP_DO_SERVIDOR:5173"`
+- `web/.env.production`: `VITE_API_URL="http://IP_DO_SERVIDOR:3001"`
 
 ## Etapa 9A - Login local
 

@@ -1,7 +1,12 @@
 node_modules/
 dist/
 .env
+.env.local
+.env.production
+web/.env.local
+web/.env.production
 src/generated/
 storage/
+backups/
 npm-debug.log*
 *.tsbuildinfo
