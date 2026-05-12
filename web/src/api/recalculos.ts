@@ -138,6 +138,18 @@ export type CriarRecalculoInput = {
   observacoes?: string;
 };
 
+export type EditarRecalculoInput = {
+  tipoGuia?: TipoGuia;
+  competencia?: string;
+  descricao?: string;
+  motivo?: string | null;
+  solicitante?: string | null;
+  dataSolicitacao?: string | null;
+  dataRecalculo?: string;
+  responsavelId?: string;
+  observacoes?: string | null;
+};
+
 export type CriarRecalculoResponse = {
   recalculo: {
     id: string;
@@ -182,6 +194,30 @@ export async function listarRecalculos(params: ListarRecalculosParams = {}) {
 
 export async function detalharRecalculo(id: string) {
   return apiRequest<RecalculoDetalhe>(`/recalculos/${id}`);
+}
+
+export async function editarRecalculo(
+  userId: string,
+  id: string,
+  input: EditarRecalculoInput
+) {
+  return apiRequest<RecalculoDetalhe>(`/recalculos/${id}`, {
+    method: "PATCH",
+    userId,
+    body: JSON.stringify(input)
+  });
+}
+
+export async function cancelarRecalculo(
+  userId: string,
+  id: string,
+  motivoCancelamento: string
+) {
+  return apiRequest<RecalculoDetalhe>(`/recalculos/${id}/cancelar`, {
+    method: "POST",
+    userId,
+    body: JSON.stringify({ motivoCancelamento })
+  });
 }
 
 export async function criarRecalculo(

@@ -92,7 +92,11 @@ function montarParams(filtros: FiltrosRecalculos): ListarRecalculosParams {
   };
 }
 
-export function RecalculosPage() {
+type RecalculosPageProps = {
+  userId: string;
+};
+
+export function RecalculosPage({ userId }: RecalculosPageProps) {
   const [filtros, setFiltros] = useState<FiltrosRecalculos>(filtrosIniciais);
   const [filtrosAplicados, setFiltrosAplicados] =
     useState<FiltrosRecalculos>(filtrosIniciais);
@@ -131,6 +135,10 @@ export function RecalculosPage() {
   function handleLimpar() {
     setFiltros(filtrosIniciais);
     setFiltrosAplicados(filtrosIniciais);
+  }
+
+  function handleRecalculoAtualizado() {
+    carregarRecalculos(filtrosAplicados);
   }
 
   const quantidadeTexto = useMemo(() => {
@@ -320,7 +328,11 @@ export function RecalculosPage() {
         </div>
       </div>
 
-      <RecalculoDetalhe recalculoId={recalculoSelecionadoId} />
+      <RecalculoDetalhe
+        recalculoId={recalculoSelecionadoId}
+        userId={userId}
+        onRecalculoAtualizado={handleRecalculoAtualizado}
+      />
     </section>
   );
 }

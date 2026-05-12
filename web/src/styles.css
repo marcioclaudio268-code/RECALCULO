@@ -232,6 +232,15 @@ small {
   white-space: nowrap;
 }
 
+.button-danger {
+  background: #a33a31;
+  color: #ffffff;
+}
+
+.button-danger:hover {
+  background: #842f28;
+}
+
 .table-wrap {
   background: #ffffff;
   border: 1px solid #d7dde2;
@@ -384,6 +393,14 @@ tr:last-child td {
   padding: 18px;
 }
 
+.detail-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .detail-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -421,6 +438,39 @@ tr:last-child td {
 .detail-section h3 {
   font-size: 16px;
   margin: 0 0 10px;
+}
+
+.edit-form {
+  border: 1px solid #d7dde2;
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 14px;
+}
+
+.edit-form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.edit-form label {
+  color: #34424e;
+  display: grid;
+  font-size: 13px;
+  font-weight: 800;
+  gap: 6px;
+}
+
+.edit-form-wide {
+  grid-column: span 2;
+}
+
+.edit-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .compact-table table {
@@ -462,6 +512,10 @@ tr:last-child td {
   .detail-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .edit-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 760px) {
@@ -479,16 +533,19 @@ tr:last-child td {
   }
 
   .recalculos-filter-row,
-  .detail-grid {
+  .detail-grid,
+  .edit-form-grid {
     grid-template-columns: 1fr;
   }
 
   .filter-actions,
-  .detail-grid-wide {
+  .detail-grid-wide,
+  .edit-form-wide {
     grid-column: auto;
   }
 
-  .filter-actions {
+  .filter-actions,
+  .edit-form-actions {
     flex-direction: column;
   }
 }

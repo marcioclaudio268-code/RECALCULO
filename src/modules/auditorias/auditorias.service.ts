@@ -45,6 +45,66 @@ export async function registrarCriacaoRecalculo(
   });
 }
 
+type AlteracaoAuditoria = {
+  campoAlterado: string;
+  valorAnterior: string | null;
+  valorNovo: string | null;
+};
+
+type RegistrarEdicaoRecalculoParams = {
+  usuarioId: string;
+  recalculoId: string;
+  alteracoes: AlteracaoAuditoria[];
+};
+
+export async function registrarEdicaoRecalculo(
+  client: AuditoriaClient,
+  params: RegistrarEdicaoRecalculoParams
+) {
+  return Promise.all(
+    params.alteracoes.map((alteracao) =>
+      client.auditoria.create({
+        data: {
+          usuarioId: params.usuarioId,
+          entidade: EntidadeAuditoria.RECALCULO_GUIA,
+          entidadeId: params.recalculoId,
+          acao: AcaoAuditoria.EDICAO,
+          campoAlterado: alteracao.campoAlterado,
+          valorAnterior: alteracao.valorAnterior,
+          valorNovo: alteracao.valorNovo
+        }
+      })
+    )
+  );
+}
+
+type RegistrarCancelamentoRecalculoParams = {
+  usuarioId: string;
+  recalculoId: string;
+  statusAnterior: string;
+  motivoCancelamento: string;
+};
+
+export async function registrarCancelamentoRecalculo(
+  client: AuditoriaClient,
+  params: RegistrarCancelamentoRecalculoParams
+) {
+  return client.auditoria.create({
+    data: {
+      usuarioId: params.usuarioId,
+      entidade: EntidadeAuditoria.RECALCULO_GUIA,
+      entidadeId: params.recalculoId,
+      acao: AcaoAuditoria.CANCELAMENTO,
+      campoAlterado: "status",
+      valorAnterior: params.statusAnterior,
+      valorNovo: JSON.stringify({
+        status: "CANCELADO",
+        motivoCancelamento: params.motivoCancelamento
+      })
+    }
+  });
+}
+
 type RegistrarImportacaoEmpresasParams = {
   usuarioId: string;
   importacaoId: string;

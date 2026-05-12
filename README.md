@@ -249,7 +249,34 @@ Content-Type: application/json
 }
 ```
 
-O header `x-user-id` é temporário para desenvolvimento, até a implementação do login real. Ele não é autenticação; apenas identifica o usuário ativo que será usado como criador do registro e da auditoria.
+Editar recálculo:
+
+```http
+PATCH /recalculos/:id
+x-user-id: <id do usuário>
+Content-Type: application/json
+
+{
+  "descricao": "Descrição corrigida",
+  "observacoes": "Ajuste manual feito na conferência"
+}
+```
+
+Cancelar recálculo:
+
+```http
+POST /recalculos/:id/cancelar
+x-user-id: <id do usuário>
+Content-Type: application/json
+
+{
+  "motivoCancelamento": "Lançamento feito na empresa errada"
+}
+```
+
+O cancelamento não apaga o registro; ele altera o status para `CANCELADO`. Edição e cancelamento criam auditorias automaticamente. Na edição, cada campo alterado gera uma auditoria própria com valor anterior e valor novo.
+
+O header `x-user-id` é temporário para desenvolvimento, até a implementação do login real. Ele não é autenticação; apenas identifica o usuário ativo que será usado como criador, atualizador ou cancelador do registro e da auditoria.
 
 ## Modelo inicial
 

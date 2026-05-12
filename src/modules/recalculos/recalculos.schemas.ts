@@ -38,6 +38,9 @@ const queryDateStringSchema = z
   });
 
 const optionalTextSchema = z.string().trim().min(1).optional();
+const nullableOptionalTextSchema = z
+  .union([z.string().trim().min(1), z.null()])
+  .optional();
 
 export const listarRecalculosQuerySchema = z.object({
   empresaId: z.string().uuid().optional(),
@@ -77,5 +80,36 @@ export const recalculoParamsSchema = z.object({
   id: z.string().uuid()
 });
 
+export const editarRecalculoBodySchema = z
+  .object({
+    tipoGuia: z.enum(tipoGuiaValues).optional(),
+    competencia: z
+      .string()
+      .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Competencia deve usar o formato YYYY-MM.")
+      .optional(),
+    descricao: z.string().trim().min(1, "Descricao nao pode ser vazia.").optional(),
+    motivo: nullableOptionalTextSchema,
+    solicitante: nullableOptionalTextSchema,
+    dataSolicitacao: z.union([dateStringSchema, z.null()]).optional(),
+    dataRecalculo: dateStringSchema.optional(),
+    responsavelId: z.string().uuid().optional(),
+    observacoes: nullableOptionalTextSchema
+  })
+  .strict()
+  .refine((value) => Object.keys(value).length > 0, {
+    message: "Informe ao menos um campo para atualizar."
+  });
+
+export const cancelarRecalculoBodySchema = z
+  .object({
+    motivoCancelamento: z
+      .string()
+      .trim()
+      .min(3, "Motivo do cancelamento deve ter pelo menos 3 caracteres.")
+  })
+  .strict();
+
 export type ListarRecalculosQuery = z.infer<typeof listarRecalculosQuerySchema>;
 export type CriarRecalculoBody = z.infer<typeof criarRecalculoBodySchema>;
+export type EditarRecalculoBody = z.infer<typeof editarRecalculoBodySchema>;
+export type CancelarRecalculoBody = z.infer<typeof cancelarRecalculoBodySchema>;

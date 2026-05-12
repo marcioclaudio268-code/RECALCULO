@@ -5,9 +5,15 @@ import {
   StatusRecalculo,
   type Prisma
 } from "../../generated/prisma/client.js";
-import { registrarCriacaoRecalculo } from "../auditorias/auditorias.service.js";
+import {
+  registrarCancelamentoRecalculo,
+  registrarCriacaoRecalculo,
+  registrarEdicaoRecalculo
+} from "../auditorias/auditorias.service.js";
 import type {
+  CancelarRecalculoBody,
   CriarRecalculoBody,
+  EditarRecalculoBody,
   ListarRecalculosQuery
 } from "./recalculos.schemas.js";
 
@@ -70,6 +76,29 @@ const recalculoListagemSelect = {
   }
 } satisfies Prisma.RecalculoGuiaSelect;
 
+const recalculoDetalheInclude = {
+  empresa: {
+    select: empresaResumoSelect
+  },
+  responsavel: {
+    select: usuarioResumoSelect
+  },
+  criadoPor: {
+    select: usuarioResumoSelect
+  },
+  atualizadoPor: {
+    select: usuarioResumoSelect
+  },
+  evidencias: {
+    orderBy: {
+      createdAt: "asc"
+    }
+  }
+} satisfies Prisma.RecalculoGuiaInclude;
+
+type RecalculoAtual = Prisma.RecalculoGuiaGetPayload<object>;
+type CampoEditavelRecalculo = keyof EditarRecalculoBody;
+
 function converterDataFiltro(value: string, fimDoDia = false) {
   const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
 
@@ -85,6 +114,114 @@ function converterDataFiltro(value: string, fimDoDia = false) {
   }
 
   return new Date(value);
+}
+
+function serializarValorAuditoria(value: unknown) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  return String(value);
+}
+
+function normalizarValorComparacao(value: unknown) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (value instanceof Date) {
+    return value.getTime();
+  }
+
+  return value;
+}
+
+function obterCamposAlterados(
+  recalculoAtual: RecalculoAtual,
+  input: EditarRecalculoBody
+) {
+  const campos = Object.keys(input) as CampoEditavelRecalculo[];
+
+  return campos.flatMap((campo) => {
+    const valorAnterior = recalculoAtual[campo];
+    const valorNovo = input[campo];
+
+    if (
+      normalizarValorComparacao(valorAnterior) ===
+      normalizarValorComparacao(valorNovo)
+    ) {
+      return [];
+    }
+
+    return [
+      {
+        campoAlterado: campo,
+        valorAnterior: serializarValorAuditoria(valorAnterior),
+        valorNovo: serializarValorAuditoria(valorNovo)
+      }
+    ];
+  });
+}
+
+function montarDadosAtualizacao(
+  input: EditarRecalculoBody,
+  usuarioId: string
+): Prisma.RecalculoGuiaUncheckedUpdateInput {
+  const data: Prisma.RecalculoGuiaUncheckedUpdateInput = {
+    atualizadoPorId: usuarioId
+  };
+
+  if (Object.hasOwn(input, "tipoGuia")) {
+    data.tipoGuia = input.tipoGuia;
+  }
+
+  if (Object.hasOwn(input, "competencia")) {
+    data.competencia = input.competencia;
+  }
+
+  if (Object.hasOwn(input, "descricao")) {
+    data.descricao = input.descricao;
+  }
+
+  if (Object.hasOwn(input, "motivo")) {
+    data.motivo = input.motivo;
+  }
+
+  if (Object.hasOwn(input, "solicitante")) {
+    data.solicitante = input.solicitante;
+  }
+
+  if (Object.hasOwn(input, "dataSolicitacao")) {
+    data.dataSolicitacao = input.dataSolicitacao;
+  }
+
+  if (Object.hasOwn(input, "dataRecalculo")) {
+    data.dataRecalculo = input.dataRecalculo;
+  }
+
+  if (Object.hasOwn(input, "responsavelId")) {
+    data.responsavelId = input.responsavelId;
+  }
+
+  if (Object.hasOwn(input, "observacoes")) {
+    data.observacoes = input.observacoes;
+  }
+
+  return data;
+}
+
+async function buscarUsuarioAtivo(usuarioId: string) {
+  return prisma.usuario.findFirst({
+    where: {
+      id: usuarioId,
+      ativo: true
+    },
+    select: usuarioResumoSelect
+  });
 }
 
 export async function listarRecalculos(query: ListarRecalculosQuery) {
@@ -140,25 +277,7 @@ export async function detalharRecalculo(id: string) {
     where: {
       id
     },
-    include: {
-      empresa: {
-        select: empresaResumoSelect
-      },
-      responsavel: {
-        select: usuarioResumoSelect
-      },
-      criadoPor: {
-        select: usuarioResumoSelect
-      },
-      atualizadoPor: {
-        select: usuarioResumoSelect
-      },
-      evidencias: {
-        orderBy: {
-          createdAt: "asc"
-        }
-      }
-    }
+    include: recalculoDetalheInclude
   });
 
   if (!recalculo) {
@@ -184,6 +303,117 @@ export async function detalharRecalculo(id: string) {
     ...recalculo,
     auditorias
   };
+}
+
+export async function editarRecalculo(
+  usuarioId: string,
+  id: string,
+  input: EditarRecalculoBody
+) {
+  const [usuarioAtualizador, responsavel] = await Promise.all([
+    buscarUsuarioAtivo(usuarioId),
+    input.responsavelId
+      ? prisma.usuario.findFirst({
+          where: {
+            id: input.responsavelId,
+            ativo: true
+          },
+          select: usuarioResumoSelect
+        })
+      : Promise.resolve(null)
+  ]);
+
+  if (!usuarioAtualizador) {
+    throw new HttpError(404, "Usuario do header x-user-id nao encontrado ou inativo.");
+  }
+
+  if (input.responsavelId && !responsavel) {
+    throw new HttpError(404, "Responsavel nao encontrado ou inativo.");
+  }
+
+  await prisma.$transaction(async (tx) => {
+    const recalculoAtual = await tx.recalculoGuia.findUnique({
+      where: {
+        id
+      }
+    });
+
+    if (!recalculoAtual) {
+      throw new HttpError(404, "Recalculo nao encontrado.");
+    }
+
+    if (recalculoAtual.status === StatusRecalculo.CANCELADO) {
+      throw new HttpError(409, "Recalculo cancelado nao pode ser editado.");
+    }
+
+    const alteracoes = obterCamposAlterados(recalculoAtual, input);
+
+    if (alteracoes.length === 0) {
+      throw new HttpError(400, "Nenhuma alteracao detectada.");
+    }
+
+    await tx.recalculoGuia.update({
+      where: {
+        id
+      },
+      data: montarDadosAtualizacao(input, usuarioId)
+    });
+
+    await registrarEdicaoRecalculo(tx, {
+      usuarioId,
+      recalculoId: id,
+      alteracoes
+    });
+  });
+
+  return detalharRecalculo(id);
+}
+
+export async function cancelarRecalculo(
+  usuarioId: string,
+  id: string,
+  input: CancelarRecalculoBody
+) {
+  const usuarioCancelamento = await buscarUsuarioAtivo(usuarioId);
+
+  if (!usuarioCancelamento) {
+    throw new HttpError(404, "Usuario do header x-user-id nao encontrado ou inativo.");
+  }
+
+  await prisma.$transaction(async (tx) => {
+    const recalculoAtual = await tx.recalculoGuia.findUnique({
+      where: {
+        id
+      }
+    });
+
+    if (!recalculoAtual) {
+      throw new HttpError(404, "Recalculo nao encontrado.");
+    }
+
+    if (recalculoAtual.status === StatusRecalculo.CANCELADO) {
+      throw new HttpError(409, "Recalculo ja esta cancelado.");
+    }
+
+    await tx.recalculoGuia.update({
+      where: {
+        id
+      },
+      data: {
+        status: StatusRecalculo.CANCELADO,
+        atualizadoPorId: usuarioId
+      }
+    });
+
+    await registrarCancelamentoRecalculo(tx, {
+      usuarioId,
+      recalculoId: id,
+      statusAnterior: recalculoAtual.status,
+      motivoCancelamento: input.motivoCancelamento
+    });
+  });
+
+  return detalharRecalculo(id);
 }
 
 export async function criarRecalculo(usuarioId: string, input: CriarRecalculoBody) {

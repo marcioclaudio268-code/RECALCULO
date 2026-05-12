@@ -55,7 +55,7 @@ export default function App() {
       {abaAtual === "empresas" ? (
         <EmpresasPage userId={userId.trim()} />
       ) : (
-        <RecalculosPage />
+        <RecalculosPage userId={userId.trim()} />
       )}
     </main>
   );
