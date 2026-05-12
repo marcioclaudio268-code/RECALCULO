@@ -164,6 +164,55 @@ function montarForm(recalculo: RecalculoDetalheType): EditFormState {
   };
 }
 
+function montarInputAlterado(
+  recalculo: RecalculoDetalheType,
+  form: EditFormState
+): EditarRecalculoInput {
+  const input: EditarRecalculoInput = {};
+  const descricao = form.descricao.trim();
+  const motivo = textoOuNull(form.motivo);
+  const solicitante = textoOuNull(form.solicitante);
+  const observacoes = textoOuNull(form.observacoes);
+  const dataSolicitacaoOriginal = toDateInputValue(recalculo.dataSolicitacao);
+  const dataRecalculoOriginal = toDateInputValue(recalculo.dataRecalculo);
+
+  if (form.tipoGuia !== recalculo.tipoGuia) {
+    input.tipoGuia = form.tipoGuia;
+  }
+
+  if (form.competencia !== recalculo.competencia) {
+    input.competencia = form.competencia;
+  }
+
+  if (descricao !== recalculo.descricao) {
+    input.descricao = descricao;
+  }
+
+  if (motivo !== (recalculo.motivo ?? null)) {
+    input.motivo = motivo;
+  }
+
+  if (solicitante !== (recalculo.solicitante ?? null)) {
+    input.solicitante = solicitante;
+  }
+
+  if (observacoes !== (recalculo.observacoes ?? null)) {
+    input.observacoes = observacoes;
+  }
+
+  if (form.dataSolicitacao !== dataSolicitacaoOriginal) {
+    input.dataSolicitacao = form.dataSolicitacao
+      ? dateInputToIso(form.dataSolicitacao)
+      : null;
+  }
+
+  if (form.dataRecalculo !== dataRecalculoOriginal) {
+    input.dataRecalculo = dateInputToIso(form.dataRecalculo);
+  }
+
+  return input;
+}
+
 export function RecalculoDetalhe({
   recalculoId,
   userId,
@@ -273,18 +322,12 @@ export function RecalculoDetalhe({
       return;
     }
 
-    const input: EditarRecalculoInput = {
-      tipoGuia: form.tipoGuia,
-      competencia: form.competencia,
-      descricao: form.descricao.trim(),
-      motivo: textoOuNull(form.motivo),
-      solicitante: textoOuNull(form.solicitante),
-      dataSolicitacao: form.dataSolicitacao
-        ? dateInputToIso(form.dataSolicitacao)
-        : null,
-      dataRecalculo: dateInputToIso(form.dataRecalculo),
-      observacoes: textoOuNull(form.observacoes)
-    };
+    const input = montarInputAlterado(recalculo, form);
+
+    if (Object.keys(input).length === 0) {
+      setMensagem({ tipo: "warning", texto: "Nenhuma alteração detectada." });
+      return;
+    }
 
     setIsSaving(true);
     setMensagem(null);
