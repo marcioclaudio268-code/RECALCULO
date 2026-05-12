@@ -187,7 +187,12 @@ URLs locais:
 - backend/API: `http://localhost:3001`
 - frontend: `http://localhost:5173`
 
-A tela inicial lista empresas, permite busca por nome, cÃ³digo ou documento, e abre o formulÃ¡rio de lanÃ§amento manual de recÃ¡lculo. Enquanto o login real nÃ£o existe, informe no topo da tela o ID temporÃ¡rio do usuÃ¡rio `Admin Local`; esse valor Ã© salvo apenas no `localStorage` do navegador e enviado como `x-user-id`. O mesmo ID Ã© usado como `responsavelId` nesta primeira versÃ£o.
+A tela inicial tem abas simples, sem React Router:
+
+- `Empresas`: lista empresas, permite busca por nome, código ou documento, e abre o formulário de lançamento manual de recálculo.
+- `Recálculos`: lista recálculos, permite filtrar por competência, tipo de guia, status e período, e exibe o detalhe com evidências e auditoria vinculada.
+
+Enquanto o login real não existe, informe no topo da tela o ID temporário do usuário `Admin Local`; esse valor é salvo apenas no `localStorage` do navegador e enviado como `x-user-id`. O mesmo ID é usado como `responsavelId` nesta primeira versão.
 
 ## Rotas iniciais da API
 

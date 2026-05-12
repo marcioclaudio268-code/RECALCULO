@@ -2,9 +2,11 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Empresa, listarEmpresas } from "../api/empresas";
 import { RecalculoForm } from "./RecalculoForm";
 
-const USER_ID_STORAGE_KEY = "recalculo_guias_user_id";
+type EmpresasPageProps = {
+  userId: string;
+};
 
-export function EmpresasPage() {
+export function EmpresasPage({ userId }: EmpresasPageProps) {
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [busca, setBusca] = useState("");
   const [buscaAplicada, setBuscaAplicada] = useState("");
@@ -14,13 +16,6 @@ export function EmpresasPage() {
   const [empresaSelecionada, setEmpresaSelecionada] = useState<Empresa | null>(
     null
   );
-  const [userId, setUserId] = useState(() =>
-    localStorage.getItem(USER_ID_STORAGE_KEY) ?? ""
-  );
-
-  useEffect(() => {
-    localStorage.setItem(USER_ID_STORAGE_KEY, userId);
-  }, [userId]);
 
   useEffect(() => {
     carregarEmpresas(buscaAplicada, limit);
@@ -64,114 +59,96 @@ export function EmpresasPage() {
   }, [empresas.length, isLoading]);
 
   return (
-    <main className="app-shell">
-      <header className="topbar">
-        <div>
-          <span className="eyebrow">Rede local</span>
-          <h1>Recálculo de Guias</h1>
+    <section className="workspace">
+      <div className="companies-area">
+        <div className="section-heading">
+          <div>
+            <h2>Empresas</h2>
+            <p>Busque por nome, código ou documento.</p>
+          </div>
+          <span className="counter">{quantidadeTexto}</span>
         </div>
-        <label className="temporary-user">
-          <span>ID do usuário temporário</span>
+
+        <form className="search-row" onSubmit={handleBuscar}>
           <input
-            value={userId}
-            onChange={(event) => setUserId(event.target.value)}
-            placeholder="Cole o ID do Admin Local"
+            value={busca}
+            onChange={(event) => setBusca(event.target.value)}
+            placeholder="Nome, código ou documento"
           />
-          <small>Será substituído pelo login real.</small>
-        </label>
-      </header>
+          <select
+            value={limit}
+            onChange={(event) => setLimit(Number(event.target.value))}
+            aria-label="Limite de empresas"
+          >
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+          <button type="submit">Buscar</button>
+          <button type="button" className="button-secondary" onClick={handleLimpar}>
+            Limpar
+          </button>
+        </form>
 
-      <section className="workspace">
-        <div className="companies-area">
-          <div className="section-heading">
-            <div>
-              <h2>Empresas</h2>
-              <p>Busque por nome, código ou documento.</p>
-            </div>
-            <span className="counter">{quantidadeTexto}</span>
-          </div>
+        {erro && <div className="message error">{erro}</div>}
 
-          <form className="search-row" onSubmit={handleBuscar}>
-            <input
-              value={busca}
-              onChange={(event) => setBusca(event.target.value)}
-              placeholder="Nome, código ou documento"
-            />
-            <select
-              value={limit}
-              onChange={(event) => setLimit(Number(event.target.value))}
-              aria-label="Limite de empresas"
-            >
-              <option value={20}>20</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-            </select>
-            <button type="submit">Buscar</button>
-            <button type="button" className="button-secondary" onClick={handleLimpar}>
-              Limpar
-            </button>
-          </form>
-
-          {erro && <div className="message error">{erro}</div>}
-
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Código</th>
-                  <th>Nome</th>
-                  <th>Documento</th>
-                  <th>Tipo</th>
-                  <th>Fantasia</th>
-                  <th>Status</th>
-                  <th>Ação</th>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Nome</th>
+                <th>Documento</th>
+                <th>Tipo</th>
+                <th>Fantasia</th>
+                <th>Status</th>
+                <th>Ação</th>
+              </tr>
+            </thead>
+            <tbody>
+              {empresas.map((empresa) => (
+                <tr
+                  key={empresa.id}
+                  className={
+                    empresaSelecionada?.id === empresa.id ? "selected-row" : ""
+                  }
+                >
+                  <td>{empresa.codigoEmpresa}</td>
+                  <td>{empresa.nome}</td>
+                  <td>{empresa.documento}</td>
+                  <td>{empresa.tipoDocumento}</td>
+                  <td>{empresa.nomeFantasia ?? "-"}</td>
+                  <td>
+                    <span className={empresa.ativa ? "status-on" : "status-off"}>
+                      {empresa.ativa ? "Ativa" : "Inativa"}
+                    </span>
+                  </td>
+                  <td>
+                    <button
+                      type="button"
+                      className="button-compact"
+                      onClick={() => setEmpresaSelecionada(empresa)}
+                    >
+                      Lançar recálculo
+                    </button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {empresas.map((empresa) => (
-                  <tr
-                    key={empresa.id}
-                    className={
-                      empresaSelecionada?.id === empresa.id ? "selected-row" : ""
-                    }
-                  >
-                    <td>{empresa.codigoEmpresa}</td>
-                    <td>{empresa.nome}</td>
-                    <td>{empresa.documento}</td>
-                    <td>{empresa.tipoDocumento}</td>
-                    <td>{empresa.nomeFantasia ?? "-"}</td>
-                    <td>
-                      <span className={empresa.ativa ? "status-on" : "status-off"}>
-                        {empresa.ativa ? "Ativa" : "Inativa"}
-                      </span>
-                    </td>
-                    <td>
-                      <button
-                        type="button"
-                        className="button-compact"
-                        onClick={() => setEmpresaSelecionada(empresa)}
-                      >
-                        Lançar recálculo
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-                {!isLoading && empresas.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="empty-cell">
-                      Nenhuma empresa encontrada.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+              ))}
+              {!isLoading && empresas.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="empty-cell">
+                    Nenhuma empresa encontrada.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
+      </div>
 
-        <aside className="form-area">
-          <RecalculoForm empresa={empresaSelecionada} userId={userId.trim()} />
-        </aside>
-      </section>
-    </main>
+      <aside className="form-area">
+        <RecalculoForm empresa={empresaSelecionada} userId={userId} />
+      </aside>
+    </section>
   );
 }
