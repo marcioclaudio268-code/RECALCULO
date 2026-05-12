@@ -102,7 +102,7 @@ function obterUsuarioAuditoria(auditoria: AuditoriaDetalhe) {
     return `${nome} (${email})`;
   }
 
-  return nome ?? email ?? auditoria.usuarioId ?? "-";
+  return nome || email || auditoria.usuarioId || "-";
 }
 
 export function RecalculoDetalhe({ recalculoId }: RecalculoDetalheProps) {
