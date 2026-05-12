@@ -17,10 +17,6 @@ export const relatorioRecalculosQuerySchema = z.object({
   incluirCancelados: booleanQuerySchema
 });
 
-export const relatorioRecalculosHeadersSchema = z.object({
-  "x-user-id": z.string().uuid("Header x-user-id deve ser um UUID valido.")
-});
-
 export type RelatorioRecalculosQuery = z.infer<
   typeof relatorioRecalculosQuerySchema
 >;

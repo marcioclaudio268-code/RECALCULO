@@ -1,4 +1,4 @@
-import { API_URL, ApiError, apiRequest } from "./client";
+import { API_URL, ApiError, apiRequest, getAuthHeaders } from "./client";
 
 export type TipoGuia =
   | "DAS"
@@ -131,7 +131,7 @@ export type CriarRecalculoInput = {
   competencia: string;
   descricao: string;
   dataRecalculo: string;
-  responsavelId: string;
+  responsavelId?: string;
   motivo?: string;
   solicitante?: string;
   dataSolicitacao?: string;
@@ -209,43 +209,27 @@ export async function detalharRecalculo(id: string) {
   return apiRequest<RecalculoDetalhe>(`/recalculos/${id}`);
 }
 
-export async function editarRecalculo(
-  userId: string,
-  id: string,
-  input: EditarRecalculoInput
-) {
+export async function editarRecalculo(id: string, input: EditarRecalculoInput) {
   return apiRequest<RecalculoDetalhe>(`/recalculos/${id}`, {
     method: "PATCH",
-    userId,
     body: JSON.stringify(input)
   });
 }
 
-export async function cancelarRecalculo(
-  userId: string,
-  id: string,
-  motivoCancelamento: string
-) {
+export async function cancelarRecalculo(id: string, motivoCancelamento: string) {
   return apiRequest<RecalculoDetalhe>(`/recalculos/${id}/cancelar`, {
     method: "POST",
-    userId,
     body: JSON.stringify({ motivoCancelamento })
   });
 }
 
-export async function enviarEvidenciaRecalculo(
-  userId: string,
-  recalculoId: string,
-  file: File
-) {
+export async function enviarEvidenciaRecalculo(recalculoId: string, file: File) {
   const formData = new FormData();
   formData.append("arquivo", file);
 
   const response = await fetch(`${API_URL}/recalculos/${recalculoId}/evidencias`, {
     method: "POST",
-    headers: {
-      "x-user-id": userId
-    },
+    headers: getAuthHeaders(),
     body: formData
   });
 
@@ -256,11 +240,9 @@ export async function enviarEvidenciaRecalculo(
   return response.json() as Promise<EvidenciaDetalhe>;
 }
 
-export async function baixarArquivoEvidencia(userId: string, evidenciaId: string) {
+export async function baixarArquivoEvidencia(evidenciaId: string) {
   const response = await fetch(`${API_URL}/evidencias/${evidenciaId}/arquivo`, {
-    headers: {
-      "x-user-id": userId
-    }
+    headers: getAuthHeaders()
   });
 
   if (!response.ok) {
@@ -270,13 +252,9 @@ export async function baixarArquivoEvidencia(userId: string, evidenciaId: string
   return response.blob();
 }
 
-export async function criarRecalculo(
-  userId: string,
-  input: CriarRecalculoInput
-) {
+export async function criarRecalculo(input: CriarRecalculoInput) {
   return apiRequest<CriarRecalculoResponse>("/recalculos", {
     method: "POST",
-    userId,
     body: JSON.stringify(input)
   });
 }

@@ -2,11 +2,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Empresa, listarEmpresas } from "../api/empresas";
 import { RecalculoForm } from "./RecalculoForm";
 
-type EmpresasPageProps = {
-  userId: string;
-};
-
-export function EmpresasPage({ userId }: EmpresasPageProps) {
+export function EmpresasPage() {
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [busca, setBusca] = useState("");
   const [buscaAplicada, setBuscaAplicada] = useState("");
@@ -147,7 +143,7 @@ export function EmpresasPage({ userId }: EmpresasPageProps) {
       </div>
 
       <aside className="form-area">
-        <RecalculoForm empresa={empresaSelecionada} userId={userId} />
+        <RecalculoForm empresa={empresaSelecionada} />
       </aside>
     </section>
   );

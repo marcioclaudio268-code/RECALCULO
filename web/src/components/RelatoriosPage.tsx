@@ -1,10 +1,6 @@
 import { FormEvent, useState } from "react";
 import { baixarRelatorioRecalculos } from "../api/relatorios";
 
-type RelatoriosPageProps = {
-  userId: string;
-};
-
 function dateToInputValue(date: Date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -22,7 +18,7 @@ function primeiroDiaMesAtualInput() {
   return dateToInputValue(new Date(hoje.getFullYear(), hoje.getMonth(), 1));
 }
 
-export function RelatoriosPage({ userId }: RelatoriosPageProps) {
+export function RelatoriosPage() {
   const [dataInicio, setDataInicio] = useState(primeiroDiaMesAtualInput);
   const [dataFim, setDataFim] = useState(dataAtualInput);
   const [incluirCancelados, setIncluirCancelados] = useState(false);
@@ -31,10 +27,6 @@ export function RelatoriosPage({ userId }: RelatoriosPageProps) {
   const [sucesso, setSucesso] = useState<string | null>(null);
 
   function validar() {
-    if (!userId) {
-      return "Informe o ID tempor\u00e1rio do usu\u00e1rio.";
-    }
-
     if (!dataInicio) {
       return "Informe a data inicial.";
     }
@@ -65,7 +57,7 @@ export function RelatoriosPage({ userId }: RelatoriosPageProps) {
     setIsGerando(true);
 
     try {
-      const filename = await baixarRelatorioRecalculos(userId, {
+      const filename = await baixarRelatorioRecalculos({
         dataInicio,
         dataFim,
         incluirCancelados

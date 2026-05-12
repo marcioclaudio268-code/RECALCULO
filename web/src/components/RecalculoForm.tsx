@@ -4,7 +4,6 @@ import { criarRecalculo, TipoGuia, tiposGuia } from "../api/recalculos";
 
 type RecalculoFormProps = {
   empresa: Empresa | null;
-  userId: string;
 };
 
 type FormState = {
@@ -29,7 +28,7 @@ const initialForm: FormState = {
   observacoes: ""
 };
 
-export function RecalculoForm({ empresa, userId }: RecalculoFormProps) {
+export function RecalculoForm({ empresa }: RecalculoFormProps) {
   const [form, setForm] = useState<FormState>(initialForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -51,11 +50,7 @@ export function RecalculoForm({ empresa, userId }: RecalculoFormProps) {
 
   function validar() {
     if (!empresa) {
-      return "Selecione uma empresa para lançar o recálculo.";
-    }
-
-    if (!userId) {
-      return "Informe o ID temporário do usuário.";
+      return "Selecione uma empresa para lancar o recalculo.";
     }
 
     if (!form.tipoGuia) {
@@ -63,15 +58,15 @@ export function RecalculoForm({ empresa, userId }: RecalculoFormProps) {
     }
 
     if (!form.competencia) {
-      return "Informe a competência.";
+      return "Informe a competencia.";
     }
 
     if (!form.descricao.trim()) {
-      return "Informe a descrição.";
+      return "Informe a descricao.";
     }
 
     if (!form.dataRecalculo) {
-      return "Informe a data do recálculo.";
+      return "Informe a data do recalculo.";
     }
 
     return null;
@@ -97,13 +92,12 @@ export function RecalculoForm({ empresa, userId }: RecalculoFormProps) {
     setIsSubmitting(true);
 
     try {
-      const resultado = await criarRecalculo(userId, {
+      const resultado = await criarRecalculo({
         empresaId: empresa.id,
         tipoGuia: form.tipoGuia,
         competencia: form.competencia,
         descricao: form.descricao.trim(),
         dataRecalculo: toIsoDate(form.dataRecalculo),
-        responsavelId: userId,
         motivo: form.motivo.trim() || undefined,
         solicitante: form.solicitante.trim() || undefined,
         dataSolicitacao: form.dataSolicitacao
@@ -112,7 +106,7 @@ export function RecalculoForm({ empresa, userId }: RecalculoFormProps) {
         observacoes: form.observacoes.trim() || undefined
       });
 
-      setSucesso("Recálculo lançado com sucesso.");
+      setSucesso("Recalculo lancado com sucesso.");
       setDuplicidade(resultado.alertaDuplicidade);
       setForm((current) => ({
         ...initialForm,
@@ -120,7 +114,7 @@ export function RecalculoForm({ empresa, userId }: RecalculoFormProps) {
         competencia: current.competencia
       }));
     } catch (error) {
-      setErro(error instanceof Error ? error.message : "Erro ao criar recálculo.");
+      setErro(error instanceof Error ? error.message : "Erro ao criar recalculo.");
     } finally {
       setIsSubmitting(false);
     }
@@ -130,14 +124,14 @@ export function RecalculoForm({ empresa, userId }: RecalculoFormProps) {
     <div className="recalculo-panel">
       <div className="section-heading compact">
         <div>
-          <h2>Lançar recálculo</h2>
-          <p>Responsável e criador usam o ID temporário informado.</p>
+          <h2>Lancar recalculo</h2>
+          <p>Responsavel e criador usam o usuario logado.</p>
         </div>
       </div>
 
       {!empresa ? (
         <div className="placeholder">
-          Selecione uma empresa na tabela para habilitar o lançamento.
+          Selecione uma empresa na tabela para habilitar o lancamento.
         </div>
       ) : (
         <>
@@ -165,7 +159,7 @@ export function RecalculoForm({ empresa, userId }: RecalculoFormProps) {
             </label>
 
             <label>
-              Competência
+              Competencia
               <input
                 type="month"
                 value={form.competencia}
@@ -174,7 +168,7 @@ export function RecalculoForm({ empresa, userId }: RecalculoFormProps) {
             </label>
 
             <label>
-              Data do recálculo
+              Data do recalculo
               <input
                 type="date"
                 value={form.dataRecalculo}
@@ -185,12 +179,12 @@ export function RecalculoForm({ empresa, userId }: RecalculoFormProps) {
             </label>
 
             <label>
-              Descrição
+              Descricao
               <textarea
                 value={form.descricao}
                 onChange={(event) => updateField("descricao", event.target.value)}
                 rows={4}
-                placeholder="Ex.: Recálculo de DAS solicitado pelo cliente"
+                placeholder="Ex.: Recalculo de DAS solicitado pelo cliente"
               />
             </label>
 
@@ -211,7 +205,7 @@ export function RecalculoForm({ empresa, userId }: RecalculoFormProps) {
             </label>
 
             <label>
-              Data da solicitação
+              Data da solicitacao
               <input
                 type="date"
                 value={form.dataSolicitacao}
@@ -222,7 +216,7 @@ export function RecalculoForm({ empresa, userId }: RecalculoFormProps) {
             </label>
 
             <label>
-              Observações
+              Observacoes
               <textarea
                 value={form.observacoes}
                 onChange={(event) => updateField("observacoes", event.target.value)}
@@ -234,13 +228,13 @@ export function RecalculoForm({ empresa, userId }: RecalculoFormProps) {
             {sucesso && <div className="message success">{sucesso}</div>}
             {duplicidade && (
               <div className="message warning">
-                Atenção: já existe recálculo parecido para esta empresa, competência,
-                tipo de guia e descrição.
+                Atencao: ja existe recalculo parecido para esta empresa,
+                competencia, tipo de guia e descricao.
               </div>
             )}
 
             <button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Lançando..." : "Lançar recálculo"}
+              {isSubmitting ? "Lancando..." : "Lancar recalculo"}
             </button>
           </form>
         </>

@@ -6,6 +6,30 @@ import {
 
 type AuditoriaClient = Pick<Prisma.TransactionClient, "auditoria">;
 
+type RegistrarLoginParams = {
+  usuarioId: string;
+  email: string;
+};
+
+export async function registrarLogin(
+  client: AuditoriaClient,
+  params: RegistrarLoginParams
+) {
+  return client.auditoria.create({
+    data: {
+      usuarioId: params.usuarioId,
+      entidade: EntidadeAuditoria.USUARIO,
+      entidadeId: params.usuarioId,
+      acao: AcaoAuditoria.LOGIN,
+      campoAlterado: null,
+      valorAnterior: null,
+      valorNovo: JSON.stringify({
+        email: params.email
+      })
+    }
+  });
+}
+
 type RegistrarCriacaoRecalculoParams = {
   usuarioId: string;
   recalculoId: string;

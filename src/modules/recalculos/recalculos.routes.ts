@@ -1,5 +1,6 @@
 import { createReadStream } from "node:fs";
 import type { FastifyInstance } from "fastify";
+import { autenticarRequest } from "../../lib/auth.js";
 import { MAX_EVIDENCIA_BYTES } from "../../lib/evidencias-storage.js";
 import { handleRouteError, HttpError } from "../../lib/http-error.js";
 import {
@@ -14,7 +15,6 @@ import {
 import {
   cancelarRecalculoBodySchema,
   criarRecalculoBodySchema,
-  criarRecalculoHeadersSchema,
   editarRecalculoBodySchema,
   evidenciaParamsSchema,
   listarRecalculosQuerySchema,
@@ -24,6 +24,7 @@ import {
 export async function recalculosRoutes(app: FastifyInstance) {
   app.get("/recalculos", async (request, reply) => {
     try {
+      await autenticarRequest(request);
       const query = listarRecalculosQuerySchema.parse(request.query);
       return await listarRecalculos(query);
     } catch (error) {
@@ -33,6 +34,7 @@ export async function recalculosRoutes(app: FastifyInstance) {
 
   app.get("/recalculos/:id", async (request, reply) => {
     try {
+      await autenticarRequest(request);
       const params = recalculoParamsSchema.parse(request.params);
       return await detalharRecalculo(params.id);
     } catch (error) {
@@ -42,11 +44,9 @@ export async function recalculosRoutes(app: FastifyInstance) {
 
   app.post("/recalculos", async (request, reply) => {
     try {
-      const headers = criarRecalculoHeadersSchema.parse({
-        "x-user-id": request.headers["x-user-id"]
-      });
+      const usuario = await autenticarRequest(request);
       const body = criarRecalculoBodySchema.parse(request.body);
-      const resultado = await criarRecalculo(headers["x-user-id"], body);
+      const resultado = await criarRecalculo(usuario.id, body);
 
       return reply.status(201).send(resultado);
     } catch (error) {
@@ -56,13 +56,11 @@ export async function recalculosRoutes(app: FastifyInstance) {
 
   app.patch("/recalculos/:id", async (request, reply) => {
     try {
+      const usuario = await autenticarRequest(request);
       const params = recalculoParamsSchema.parse(request.params);
-      const headers = criarRecalculoHeadersSchema.parse({
-        "x-user-id": request.headers["x-user-id"]
-      });
       const body = editarRecalculoBodySchema.parse(request.body);
 
-      return await editarRecalculo(headers["x-user-id"], params.id, body);
+      return await editarRecalculo(usuario.id, params.id, body);
     } catch (error) {
       return handleRouteError(error, reply, request.log);
     }
@@ -70,13 +68,11 @@ export async function recalculosRoutes(app: FastifyInstance) {
 
   app.post("/recalculos/:id/cancelar", async (request, reply) => {
     try {
+      const usuario = await autenticarRequest(request);
       const params = recalculoParamsSchema.parse(request.params);
-      const headers = criarRecalculoHeadersSchema.parse({
-        "x-user-id": request.headers["x-user-id"]
-      });
       const body = cancelarRecalculoBodySchema.parse(request.body);
 
-      return await cancelarRecalculo(headers["x-user-id"], params.id, body);
+      return await cancelarRecalculo(usuario.id, params.id, body);
     } catch (error) {
       return handleRouteError(error, reply, request.log);
     }
@@ -84,10 +80,8 @@ export async function recalculosRoutes(app: FastifyInstance) {
 
   app.post("/recalculos/:id/evidencias", async (request, reply) => {
     try {
+      const usuario = await autenticarRequest(request);
       const params = recalculoParamsSchema.parse(request.params);
-      const headers = criarRecalculoHeadersSchema.parse({
-        "x-user-id": request.headers["x-user-id"]
-      });
 
       const file = await request.file({
         limits: {
@@ -113,7 +107,7 @@ export async function recalculosRoutes(app: FastifyInstance) {
       }
 
       const evidencia = await anexarEvidenciaRecalculo(
-        headers["x-user-id"],
+        usuario.id,
         params.id,
         {
           nomeArquivo: file.filename,
@@ -130,12 +124,10 @@ export async function recalculosRoutes(app: FastifyInstance) {
 
   app.get("/evidencias/:id/arquivo", async (request, reply) => {
     try {
+      const usuario = await autenticarRequest(request);
       const params = evidenciaParamsSchema.parse(request.params);
-      const headers = criarRecalculoHeadersSchema.parse({
-        "x-user-id": request.headers["x-user-id"]
-      });
       const { evidencia, caminhoAbsoluto } = await obterArquivoEvidencia(
-        headers["x-user-id"],
+        usuario.id,
         params.id
       );
       const nomeArquivoSeguro = evidencia.nomeArquivo.replace(/["\r\n]/g, "_");

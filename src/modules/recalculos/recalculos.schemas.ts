@@ -65,15 +65,11 @@ export const criarRecalculoBodySchema = z.object({
     .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Competencia deve usar o formato YYYY-MM."),
   descricao: z.string().trim().min(1, "Descricao nao pode ser vazia."),
   dataRecalculo: dateStringSchema,
-  responsavelId: z.string().uuid(),
+  responsavelId: z.string().uuid().optional(),
   motivo: optionalTextSchema,
   solicitante: optionalTextSchema,
   dataSolicitacao: dateStringSchema.optional(),
   observacoes: optionalTextSchema
-});
-
-export const criarRecalculoHeadersSchema = z.object({
-  "x-user-id": z.string().uuid()
 });
 
 export const recalculoParamsSchema = z.object({

@@ -72,6 +72,36 @@ textarea:focus {
   padding: 24px;
 }
 
+.login-shell {
+  align-items: center;
+  display: grid;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.login-panel {
+  background: #ffffff;
+  border: 1px solid #d7dde2;
+  border-radius: 8px;
+  margin: 0 auto;
+  max-width: 430px;
+  padding: 22px;
+  width: 100%;
+}
+
+.login-form {
+  display: grid;
+  gap: 12px;
+}
+
+.login-form label {
+  color: #34424e;
+  display: grid;
+  font-size: 13px;
+  font-weight: 800;
+  gap: 6px;
+}
+
 .topbar {
   display: flex;
   align-items: flex-end;
@@ -143,6 +173,19 @@ small {
   gap: 6px;
   max-width: 420px;
   min-width: min(420px, 100%);
+}
+
+.session-user {
+  align-items: end;
+  display: grid;
+  gap: 6px;
+  justify-items: end;
+}
+
+.session-user span {
+  color: #34424e;
+  font-size: 13px;
+  font-weight: 800;
 }
 
 .temporary-user span,

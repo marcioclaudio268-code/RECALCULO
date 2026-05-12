@@ -336,7 +336,7 @@ export async function gerarRelatorioRecalculosExcel(
   const usuario = await buscarUsuarioAtivo(usuarioId);
 
   if (!usuario) {
-    throw new HttpError(404, "Usuario do header x-user-id nao encontrado ou inativo.");
+    throw new HttpError(404, "Usuario autenticado nao encontrado ou inativo.");
   }
 
   const periodo = montarPeriodo(query);

@@ -350,7 +350,7 @@ export async function editarRecalculo(
   ]);
 
   if (!usuarioAtualizador) {
-    throw new HttpError(404, "Usuario do header x-user-id nao encontrado ou inativo.");
+    throw new HttpError(404, "Usuario autenticado nao encontrado ou inativo.");
   }
 
   if (input.responsavelId && !responsavel) {
@@ -403,7 +403,7 @@ export async function cancelarRecalculo(
   const usuarioCancelamento = await buscarUsuarioAtivo(usuarioId);
 
   if (!usuarioCancelamento) {
-    throw new HttpError(404, "Usuario do header x-user-id nao encontrado ou inativo.");
+    throw new HttpError(404, "Usuario autenticado nao encontrado ou inativo.");
   }
 
   await prisma.$transaction(async (tx) => {
@@ -461,7 +461,7 @@ export async function anexarEvidenciaRecalculo(
   ]);
 
   if (!usuarioEnvio) {
-    throw new HttpError(404, "Usuario do header x-user-id nao encontrado ou inativo.");
+    throw new HttpError(404, "Usuario autenticado nao encontrado ou inativo.");
   }
 
   if (!recalculo) {
@@ -516,7 +516,7 @@ export async function obterArquivoEvidencia(usuarioId: string, evidenciaId: stri
   const usuario = await buscarUsuarioAtivo(usuarioId);
 
   if (!usuario) {
-    throw new HttpError(404, "Usuario do header x-user-id nao encontrado ou inativo.");
+    throw new HttpError(404, "Usuario autenticado nao encontrado ou inativo.");
   }
 
   const evidencia = await prisma.evidenciaSolicitacao.findUnique({
@@ -545,6 +545,7 @@ export async function obterArquivoEvidencia(usuarioId: string, evidenciaId: stri
 }
 
 export async function criarRecalculo(usuarioId: string, input: CriarRecalculoBody) {
+  const responsavelId = input.responsavelId ?? usuarioId;
   const [usuarioCriador, empresa, responsavel] = await Promise.all([
     prisma.usuario.findFirst({
       where: {
@@ -562,7 +563,7 @@ export async function criarRecalculo(usuarioId: string, input: CriarRecalculoBod
     }),
     prisma.usuario.findFirst({
       where: {
-        id: input.responsavelId,
+        id: responsavelId,
         ativo: true
       },
       select: usuarioResumoSelect
@@ -570,7 +571,7 @@ export async function criarRecalculo(usuarioId: string, input: CriarRecalculoBod
   ]);
 
   if (!usuarioCriador) {
-    throw new HttpError(404, "Usuario do header x-user-id nao encontrado ou inativo.");
+    throw new HttpError(404, "Usuario autenticado nao encontrado ou inativo.");
   }
 
   if (!empresa) {
@@ -622,7 +623,7 @@ export async function criarRecalculo(usuarioId: string, input: CriarRecalculoBod
         solicitante: input.solicitante ?? null,
         dataSolicitacao: input.dataSolicitacao ?? null,
         dataRecalculo: input.dataRecalculo,
-        responsavelId: input.responsavelId,
+        responsavelId,
         status: StatusRecalculo.LANCADO,
         observacoes: input.observacoes ?? null,
         criadoPorId: usuarioId,

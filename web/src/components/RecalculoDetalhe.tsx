@@ -15,7 +15,6 @@ import {
 
 type RecalculoDetalheProps = {
   recalculoId: string | null;
-  userId: string;
   onRecalculoAtualizado: () => void;
 };
 
@@ -255,7 +254,6 @@ function montarInputAlterado(
 
 export function RecalculoDetalhe({
   recalculoId,
-  userId,
   onRecalculoAtualizado
 }: RecalculoDetalheProps) {
   const [recalculo, setRecalculo] = useState<RecalculoDetalheType | null>(null);
@@ -346,14 +344,6 @@ export function RecalculoDetalhe({
       return;
     }
 
-    if (!userId) {
-      setMensagem({
-        tipo: "error",
-        texto: "Informe o ID temporário do usuário antes de salvar."
-      });
-      return;
-    }
-
     if (!form.descricao.trim()) {
       setMensagem({ tipo: "error", texto: "Descrição não pode ficar vazia." });
       return;
@@ -380,7 +370,7 @@ export function RecalculoDetalhe({
     setMensagem(null);
 
     try {
-      const atualizado = await editarRecalculo(userId, recalculo.id, input);
+      const atualizado = await editarRecalculo(recalculo.id, input);
       setRecalculo(atualizado);
       setForm(montarForm(atualizado));
       setModoEdicao(false);
@@ -402,14 +392,6 @@ export function RecalculoDetalhe({
 
   async function handleCancelarRecalculo() {
     if (!recalculo || recalculo.status === "CANCELADO") {
-      return;
-    }
-
-    if (!userId) {
-      setMensagem({
-        tipo: "error",
-        texto: "Informe o ID temporário do usuário antes de cancelar."
-      });
       return;
     }
 
@@ -436,11 +418,7 @@ export function RecalculoDetalhe({
     setMensagem(null);
 
     try {
-      const atualizado = await cancelarRecalculo(
-        userId,
-        recalculo.id,
-        motivoCancelamento
-      );
+      const atualizado = await cancelarRecalculo(recalculo.id, motivoCancelamento);
       setRecalculo(atualizado);
       setForm(montarForm(atualizado));
       setModoEdicao(false);
@@ -490,14 +468,6 @@ export function RecalculoDetalhe({
       return;
     }
 
-    if (!userId) {
-      setMensagem({
-        tipo: "error",
-        texto: "Informe o ID temporario do usuario antes de anexar evidencia."
-      });
-      return;
-    }
-
     if (!arquivoEvidencia) {
       setMensagem({ tipo: "error", texto: "Selecione um arquivo de evidencia." });
       return;
@@ -514,7 +484,7 @@ export function RecalculoDetalhe({
     setMensagem(null);
 
     try {
-      await enviarEvidenciaRecalculo(userId, recalculo.id, arquivoEvidencia);
+      await enviarEvidenciaRecalculo(recalculo.id, arquivoEvidencia);
       const atualizado = await detalharRecalculo(recalculo.id);
 
       setRecalculo(atualizado);
@@ -542,20 +512,12 @@ export function RecalculoDetalhe({
   }
 
   async function handleAbrirEvidencia(evidencia: EvidenciaDetalhe) {
-    if (!userId) {
-      setMensagem({
-        tipo: "error",
-        texto: "Informe o ID temporario do usuario para abrir a evidencia."
-      });
-      return;
-    }
-
     const novaJanela = window.open("", "_blank", "noopener,noreferrer");
     setEvidenciaAbrindoId(evidencia.id);
     setMensagem(null);
 
     try {
-      const blob = await baixarArquivoEvidencia(userId, evidencia.id);
+      const blob = await baixarArquivoEvidencia(evidencia.id);
       const url = URL.createObjectURL(blob);
 
       if (novaJanela) {

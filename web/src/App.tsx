@@ -1,21 +1,117 @@
 import { useEffect, useState } from "react";
+import {
+  logout as logoutApi,
+  me,
+  type UsuarioAutenticado
+} from "./api/auth";
+import { clearAuthToken, getAuthToken, setAuthToken } from "./api/client";
 import { EmpresasPage } from "./components/EmpresasPage";
+import { LoginPage } from "./components/LoginPage";
 import { RecalculosPage } from "./components/RecalculosPage";
 import { RelatoriosPage } from "./components/RelatoriosPage";
 
 type AbaAtual = "empresas" | "recalculos" | "relatorios";
 
-const USER_ID_STORAGE_KEY = "recalculo_guias_user_id";
+const AUTH_USER_STORAGE_KEY = "recalculo_guias_auth_user";
+
+function carregarUsuarioSalvo() {
+  const raw = localStorage.getItem(AUTH_USER_STORAGE_KEY);
+
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(raw) as UsuarioAutenticado;
+  } catch {
+    localStorage.removeItem(AUTH_USER_STORAGE_KEY);
+    return null;
+  }
+}
 
 export default function App() {
   const [abaAtual, setAbaAtual] = useState<AbaAtual>("empresas");
-  const [userId, setUserId] = useState(() =>
-    localStorage.getItem(USER_ID_STORAGE_KEY) ?? ""
+  const [usuario, setUsuario] = useState<UsuarioAutenticado | null>(
+    carregarUsuarioSalvo
+  );
+  const [isVerificandoSessao, setIsVerificandoSessao] = useState(() =>
+    Boolean(getAuthToken())
   );
 
   useEffect(() => {
-    localStorage.setItem(USER_ID_STORAGE_KEY, userId);
-  }, [userId]);
+    const token = getAuthToken();
+
+    if (!token) {
+      setUsuario(null);
+      setIsVerificandoSessao(false);
+      return;
+    }
+
+    let ativo = true;
+
+    async function validarSessao() {
+      try {
+        const resultado = await me();
+
+        if (ativo) {
+          setUsuario(resultado.usuario);
+          localStorage.setItem(
+            AUTH_USER_STORAGE_KEY,
+            JSON.stringify(resultado.usuario)
+          );
+        }
+      } catch {
+        clearAuthToken();
+        localStorage.removeItem(AUTH_USER_STORAGE_KEY);
+
+        if (ativo) {
+          setUsuario(null);
+        }
+      } finally {
+        if (ativo) {
+          setIsVerificandoSessao(false);
+        }
+      }
+    }
+
+    validarSessao();
+
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
+  function handleLogin(token: string, usuarioAutenticado: UsuarioAutenticado) {
+    setAuthToken(token);
+    localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(usuarioAutenticado));
+    setUsuario(usuarioAutenticado);
+    setAbaAtual("empresas");
+  }
+
+  async function handleLogout() {
+    try {
+      await logoutApi();
+    } catch {
+      clearAuthToken();
+    } finally {
+      clearAuthToken();
+      localStorage.removeItem(AUTH_USER_STORAGE_KEY);
+      setUsuario(null);
+      setAbaAtual("empresas");
+    }
+  }
+
+  if (isVerificandoSessao) {
+    return (
+      <main className="login-shell">
+        <div className="placeholder">Validando sessao...</div>
+      </main>
+    );
+  }
+
+  if (!usuario) {
+    return <LoginPage onLogin={handleLogin} />;
+  }
 
   return (
     <main className="app-shell">
@@ -51,23 +147,21 @@ export default function App() {
             </button>
           </nav>
         </div>
-        <label className="temporary-user">
-          <span>{"ID do usu\u00e1rio tempor\u00e1rio"}</span>
-          <input
-            value={userId}
-            onChange={(event) => setUserId(event.target.value)}
-            placeholder="Cole o ID do Admin Local"
-          />
-          <small>{"Ser\u00e1 substitu\u00eddo pelo login real."}</small>
-        </label>
+        <div className="session-user">
+          <span>Usuario: {usuario.nome}</span>
+          <small>{usuario.email}</small>
+          <button type="button" className="button-secondary" onClick={handleLogout}>
+            Sair
+          </button>
+        </div>
       </header>
 
       {abaAtual === "empresas" ? (
-        <EmpresasPage userId={userId.trim()} />
+        <EmpresasPage />
       ) : abaAtual === "recalculos" ? (
-        <RecalculosPage userId={userId.trim()} />
+        <RecalculosPage />
       ) : (
-        <RelatoriosPage userId={userId.trim()} />
+        <RelatoriosPage />
       )}
     </main>
   );

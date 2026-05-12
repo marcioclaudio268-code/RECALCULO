@@ -1,4 +1,4 @@
-import { API_URL, ApiError } from "./client";
+import { API_URL, ApiError, getAuthHeaders } from "./client";
 
 export type BaixarRelatorioRecalculosParams = {
   dataInicio: string;
@@ -39,7 +39,6 @@ function dispararDownload(blob: Blob, filename: string) {
 }
 
 export async function baixarRelatorioRecalculos(
-  userId: string,
   params: BaixarRelatorioRecalculosParams
 ) {
   const searchParams = new URLSearchParams({
@@ -54,9 +53,7 @@ export async function baixarRelatorioRecalculos(
   const response = await fetch(
     `${API_URL}/relatorios/recalculos.xlsx?${searchParams.toString()}`,
     {
-      headers: {
-        "x-user-id": userId
-      }
+      headers: getAuthHeaders()
     }
   );
 

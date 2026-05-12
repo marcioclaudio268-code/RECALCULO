@@ -92,11 +92,7 @@ function montarParams(filtros: FiltrosRecalculos): ListarRecalculosParams {
   };
 }
 
-type RecalculosPageProps = {
-  userId: string;
-};
-
-export function RecalculosPage({ userId }: RecalculosPageProps) {
+export function RecalculosPage() {
   const [filtros, setFiltros] = useState<FiltrosRecalculos>(filtrosIniciais);
   const [filtrosAplicados, setFiltrosAplicados] =
     useState<FiltrosRecalculos>(filtrosIniciais);
@@ -330,7 +326,6 @@ export function RecalculosPage({ userId }: RecalculosPageProps) {
 
       <RecalculoDetalhe
         recalculoId={recalculoSelecionadoId}
-        userId={userId}
         onRecalculoAtualizado={handleRecalculoAtualizado}
       />
     </section>
