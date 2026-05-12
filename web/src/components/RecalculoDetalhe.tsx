@@ -145,6 +145,177 @@ function formatarValorAuditoria(value: string | null) {
   }
 }
 
+const acaoAuditoriaLabels: Record<string, string> = {
+  CRIACAO: "Criação",
+  EDICAO: "Edição",
+  CANCELAMENTO: "Cancelamento",
+  ANEXO_ADICIONADO: "Anexo adicionado",
+  LOGIN: "Login",
+  IMPORTACAO: "Importação"
+};
+
+const campoAuditoriaLabels: Record<string, string> = {
+  tipoGuia: "Tipo de guia",
+  competencia: "Competência",
+  descricao: "Descrição",
+  motivo: "Motivo",
+  solicitante: "Solicitante",
+  dataSolicitacao: "Data da solicitação",
+  dataRecalculo: "Data do recálculo",
+  responsavelId: "Responsável",
+  observacoes: "Observações",
+  status: "Status",
+  evidencias: "Evidências"
+};
+
+const statusAuditoriaLabels: Record<string, string> = {
+  LANCADO: "Lançado",
+  EM_REVISAO: "Em revisão",
+  FINALIZADO: "Finalizado",
+  CANCELADO: "Cancelado"
+};
+
+function traduzirAcaoAuditoria(acao: string) {
+  return acaoAuditoriaLabels[acao] ?? acao;
+}
+
+function traduzirCampoAuditoria(campo?: string | null) {
+  if (!campo) {
+    return "-";
+  }
+
+  return campoAuditoriaLabels[campo] ?? campo;
+}
+
+function tentarParseJsonAuditoria(value: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(value) as unknown;
+  } catch {
+    return value;
+  }
+}
+
+function isObjetoAuditoria(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function formatarDataAuditoria(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("pt-BR").format(date);
+}
+
+function formatarValorSimplesAuditoria(value: unknown) {
+  if (value === null || value === undefined || value === "") {
+    return "vazio";
+  }
+
+  if (typeof value === "string") {
+    if (statusAuditoriaLabels[value]) {
+      return statusAuditoriaLabels[value];
+    }
+
+    if (/^\d{4}-\d{2}-\d{2}/.test(value)) {
+      return formatarDataAuditoria(value);
+    }
+
+    return value;
+  }
+
+  if (typeof value === "number") {
+    return String(value);
+  }
+
+  if (typeof value === "boolean") {
+    return value ? "sim" : "não";
+  }
+
+  if (isObjetoAuditoria(value)) {
+    return "dados técnicos";
+  }
+
+  return String(value);
+}
+
+function formatarResumoAuditoria(auditoria: AuditoriaDetalhe) {
+  const valorNovo = tentarParseJsonAuditoria(auditoria.valorNovo);
+  const valorAnterior = tentarParseJsonAuditoria(auditoria.valorAnterior);
+
+  if (auditoria.acao === "CRIACAO" && isObjetoAuditoria(valorNovo)) {
+    const tipoGuia = formatarValorSimplesAuditoria(valorNovo.tipoGuia);
+    const competencia = formatarValorSimplesAuditoria(valorNovo.competencia);
+    const status = formatarValorSimplesAuditoria(valorNovo.status);
+
+    return `Recálculo criado: ${tipoGuia}, competência ${competencia}, status ${status}.`;
+  }
+
+  if (auditoria.acao === "ANEXO_ADICIONADO" && isObjetoAuditoria(valorNovo)) {
+    const nomeArquivo = formatarValorSimplesAuditoria(valorNovo.nomeArquivo);
+    const tamanhoArquivo =
+      typeof valorNovo.tamanhoArquivo === "number"
+        ? formatarTamanhoArquivo(valorNovo.tamanhoArquivo)
+        : "-";
+
+    return `Anexo adicionado: ${nomeArquivo} (${tamanhoArquivo}).`;
+  }
+
+  if (auditoria.acao === "EDICAO") {
+    const campo = traduzirCampoAuditoria(auditoria.campoAlterado);
+    const anterior = formatarValorSimplesAuditoria(valorAnterior);
+    const novo = formatarValorSimplesAuditoria(valorNovo);
+
+    return `${campo} alterado de "${anterior}" para "${novo}".`;
+  }
+
+  if (auditoria.acao === "CANCELAMENTO") {
+    if (isObjetoAuditoria(valorNovo)) {
+      const motivo =
+        valorNovo.motivoCancelamento ?? valorNovo.motivo ?? valorNovo.observacao;
+
+      if (motivo) {
+        return `Recálculo cancelado. Motivo: ${formatarValorSimplesAuditoria(
+          motivo
+        )}.`;
+      }
+    }
+
+    return "Recálculo cancelado.";
+  }
+
+  return "Registro de auditoria técnico.";
+}
+
+function formatarValorAnteriorResumoAuditoria(auditoria: AuditoriaDetalhe) {
+  if (!auditoria.valorAnterior) {
+    return "-";
+  }
+
+  return formatarValorSimplesAuditoria(
+    tentarParseJsonAuditoria(auditoria.valorAnterior)
+  );
+}
+
+function DadosTecnicosAuditoria({ value }: { value: string | null }) {
+  if (!value) {
+    return null;
+  }
+
+  return (
+    <details className="audit-technical">
+      <summary>Ver dados técnicos</summary>
+      <pre className="audit-value">{formatarValorAuditoria(value)}</pre>
+    </details>
+  );
+}
+
 function obterUsuarioAuditoria(auditoria: AuditoriaDetalhe) {
   const nome = auditoria.usuario?.nome?.trim();
   const email = auditoria.usuario?.email?.trim();
@@ -894,23 +1065,23 @@ export function RecalculoDetalhe({
                   <tr key={auditoria.id}>
                     <td>{formatarDataHora(auditoria.createdAt)}</td>
                     <td>{obterUsuarioAuditoria(auditoria)}</td>
-                    <td>{auditoria.acao}</td>
-                    <td>{auditoria.campoAlterado ?? "-"}</td>
+                    <td>{traduzirAcaoAuditoria(auditoria.acao)}</td>
+                    <td>{traduzirCampoAuditoria(auditoria.campoAlterado)}</td>
                     <td>
-                      <pre className="audit-value">
-                        {formatarValorAuditoria(auditoria.valorAnterior)}
-                      </pre>
+                      <span className="audit-summary">
+                        {formatarValorAnteriorResumoAuditoria(auditoria)}
+                      </span>
+                      <DadosTecnicosAuditoria value={auditoria.valorAnterior} />
                     </td>
                     <td>
-                      <pre className="audit-value">
-                        {formatarValorAuditoria(auditoria.valorNovo)}
-                      </pre>
+                      <span className="audit-summary">{formatarResumoAuditoria(auditoria)}</span>
+                      <DadosTecnicosAuditoria value={auditoria.valorNovo} />
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
+           </div>
         )}
       </section>
     </section>

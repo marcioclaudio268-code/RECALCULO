@@ -640,6 +640,27 @@ tr:last-child td {
   word-break: break-word;
 }
 
+.audit-summary {
+  display: block;
+  line-height: 1.4;
+  max-width: 460px;
+}
+
+.audit-technical {
+  margin-top: 6px;
+}
+
+.audit-technical summary {
+  color: #1d5f74;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.audit-technical .audit-value {
+  margin-top: 6px;
+}
+
 @media (max-width: 1080px) {
   .workspace {
     grid-template-columns: 1fr;
