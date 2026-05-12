@@ -29,6 +29,14 @@ const dateStringSchema = z
   })
   .transform((value) => new Date(value));
 
+const queryDateStringSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .refine((value) => !Number.isNaN(Date.parse(value)), {
+    message: "Data invalida."
+  });
+
 const optionalTextSchema = z.string().trim().min(1).optional();
 
 export const listarRecalculosQuerySchema = z.object({
@@ -39,8 +47,8 @@ export const listarRecalculosQuerySchema = z.object({
     .string()
     .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Competencia deve usar o formato YYYY-MM.")
     .optional(),
-  dataInicio: dateStringSchema.optional(),
-  dataFim: dateStringSchema.optional(),
+  dataInicio: queryDateStringSchema.optional(),
+  dataFim: queryDateStringSchema.optional(),
   responsavelId: z.string().uuid().optional(),
   limit: z.coerce.number().int().min(1).max(100).default(20),
   offset: z.coerce.number().int().min(0).default(0)

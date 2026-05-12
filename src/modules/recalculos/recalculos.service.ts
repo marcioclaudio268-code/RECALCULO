@@ -70,6 +70,23 @@ const recalculoListagemSelect = {
   }
 } satisfies Prisma.RecalculoGuiaSelect;
 
+function converterDataFiltro(value: string, fimDoDia = false) {
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+
+  if (dateOnlyMatch) {
+    const [, year, month, day] = dateOnlyMatch;
+    const date = new Date(Number(year), Number(month) - 1, Number(day));
+
+    if (fimDoDia) {
+      date.setHours(23, 59, 59, 999);
+    }
+
+    return date;
+  }
+
+  return new Date(value);
+}
+
 export async function listarRecalculos(query: ListarRecalculosQuery) {
   const where: Prisma.RecalculoGuiaWhereInput = {};
 
@@ -95,8 +112,8 @@ export async function listarRecalculos(query: ListarRecalculosQuery) {
 
   if (query.dataInicio || query.dataFim) {
     where.dataRecalculo = {
-      ...(query.dataInicio ? { gte: query.dataInicio } : {}),
-      ...(query.dataFim ? { lte: query.dataFim } : {})
+      ...(query.dataInicio ? { gte: converterDataFiltro(query.dataInicio) } : {}),
+      ...(query.dataFim ? { lte: converterDataFiltro(query.dataFim, true) } : {})
     };
   }
 
@@ -152,6 +169,11 @@ export async function detalharRecalculo(id: string) {
     where: {
       entidade: EntidadeAuditoria.RECALCULO_GUIA,
       entidadeId: recalculo.id
+    },
+    include: {
+      usuario: {
+        select: usuarioResumoSelect
+      }
     },
     orderBy: {
       createdAt: "asc"

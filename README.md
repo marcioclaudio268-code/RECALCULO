@@ -1,6 +1,6 @@
-﻿# AutomaÃ§Ã£o de RecÃ¡lculo de Guias
+# Automação de Recálculo de Guias
 
-Base tÃ©cnica inicial para um sistema interno de escritÃ³rio contÃ¡bil usado em rede local. O objetivo do projeto Ã© registrar solicitaÃ§Ãµes de recÃ¡lculo de guias vinculadas a empresas cadastradas, manter evidÃªncias opcionais e preservar trilha de auditoria. O recÃ¡lculo da guia acontece fora do sistema; esta aplicaÃ§Ã£o registra e organiza o fluxo.
+Base técnica inicial para um sistema interno de escritório contábil usado em rede local. O objetivo do projeto é registrar solicitações de recálculo de guias vinculadas a empresas cadastradas, manter evidências opcionais e preservar trilha de auditoria. O recálculo da guia acontece fora do sistema; esta aplicação registra e organiza o fluxo.
 
 ## Stack
 
@@ -12,15 +12,15 @@ Base tÃ©cnica inicial para um sistema interno de escritÃ³rio contÃ¡bil usa
 - Zod
 - dotenv
 
-Fastify foi escolhido por ser simples, leve e adequado para uma API interna sem exigir uma estrutura grande neste inÃ­cio. Ele permite crescer para rotas, plugins e validaÃ§Ãµes sem acoplar o projeto a um framework mais pesado.
+Fastify foi escolhido por ser simples, leve e adequado para uma API interna sem exigir uma estrutura grande neste início. Ele permite crescer para rotas, plugins e validações sem acoplar o projeto a um framework mais pesado.
 
-## InstalaÃ§Ã£o
+## Instalação
 
 ```bash
 npm install
 ```
 
-## ConfiguraÃ§Ã£o do ambiente
+## Configuração do ambiente
 
 Crie um arquivo `.env` a partir do exemplo:
 
@@ -61,63 +61,63 @@ Abra o Prisma Studio, se precisar inspecionar o banco:
 npm run prisma:studio
 ```
 
-ObservaÃ§Ã£o: este projeto usa Prisma 7. A URL do banco fica em `prisma.config.ts`, carregada de `DATABASE_URL`, e o acesso runtime usa `@prisma/adapter-pg`.
+Observação: este projeto usa Prisma 7. A URL do banco fica em `prisma.config.ts`, carregada de `DATABASE_URL`, e o acesso runtime usa `@prisma/adapter-pg`.
 
 ## Seed de desenvolvimento
 
-Depois de criar o banco e aplicar as migrations, rode o seed mÃ­nimo:
+Depois de criar o banco e aplicar as migrations, rode o seed mínimo:
 
 ```bash
 npm run db:seed
 ```
 
-TambÃ©m Ã© possÃ­vel rodar pelo Prisma:
+Também é possível rodar pelo Prisma:
 
 ```bash
 npx prisma db seed
 ```
 
-UsuÃ¡rio fictÃ­cio de desenvolvimento:
+Usuário fictício de desenvolvimento:
 
 ```text
 email: admin@recalculo.local
 senha: admin123
 ```
 
-Esse usuÃ¡rio existe apenas para ambiente local/dev. A senha Ã© fictÃ­cia, armazenada como hash no banco, e nÃ£o deve ser usada em ambiente real.
+Esse usuário existe apenas para ambiente local/dev. A senha é fictícia, armazenada como hash no banco, e não deve ser usada em ambiente real.
 
-## ImportaÃ§Ã£o local de empresas e contatos
+## Importação local de empresas e contatos
 
-O projeto possui um script local para importar empresas e contatos de um CSV separado por ponto e vÃ­rgula. O arquivo deve ter as colunas exportadas pelo sistema atual, incluindo `ID`, `CNPJ`, `RazÃ£o social`, `Nome fantasia`, `Nome do Contato`, `Telefone do Contato`, `Email do Contato`, `Cargo do Contato` e `Departamentos do Contato`.
+O projeto possui um script local para importar empresas e contatos de um CSV separado por ponto e vírgula. O arquivo deve ter as colunas exportadas pelo sistema atual, incluindo `ID`, `CNPJ`, `Razão social`, `Nome fantasia`, `Nome do Contato`, `Telefone do Contato`, `Email do Contato`, `Cargo do Contato` e `Departamentos do Contato`.
 
-Rodar prÃ©via sem gravar no banco:
+Rodar prévia sem gravar no banco:
 
 ```bash
 npm run importar:empresas:preview -- "C:\caminho\arquivo.csv"
 ```
 
-Rodar importaÃ§Ã£o real:
+Rodar importação real:
 
 ```bash
 npm run importar:empresas -- "C:\caminho\arquivo.csv" --usuario-id=<id>
 ```
 
-Se `--usuario-id` nÃ£o for informado, o script tenta usar o usuÃ¡rio ativo `admin@recalculo.local`. Em modo real, a importaÃ§Ã£o grava um resumo em `importacoes_empresas` e cria auditoria com `acao=IMPORTACAO`.
+Se `--usuario-id` não for informado, o script tenta usar o usuário ativo `admin@recalculo.local`. Em modo real, a importação grava um resumo em `importacoes_empresas` e cria auditoria com `acao=IMPORTACAO`.
 
 Regras principais:
 
-- o documento Ã© normalizado removendo ponto, barra, hÃ­fen e espaÃ§os
-- CPF e CNPJ sÃ£o validados antes da gravaÃ§Ã£o
-- empresa existente com mesmo `codigoEmpresa` e `documento` Ã© atualizada
-- conflito grave entre cÃ³digo e documento Ã© registrado como erro e nÃ£o Ã© sobrescrito
-- contatos sÃ£o criados separados da empresa
-- contato duplicado na mesma empresa Ã© evitado por email; sem email, por nome e telefone
-- a linha final de filtros do CSV Ã© ignorada
-- nÃ£o use dados reais em ambientes de teste fora da rede local autorizada
+- o documento é normalizado removendo ponto, barra, hífen e espaços
+- CPF e CNPJ são validados antes da gravação
+- empresa existente com mesmo `codigoEmpresa` e `documento` é atualizada
+- conflito grave entre código e documento é registrado como erro e não é sobrescrito
+- contatos são criados separados da empresa
+- contato duplicado na mesma empresa é evitado por email; sem email, por nome e telefone
+- a linha final de filtros do CSV é ignorada
+- não use dados reais em ambientes de teste fora da rede local autorizada
 
 ## Desenvolvimento
 
-Instale as dependÃªncias do backend:
+Instale as dependências do backend:
 
 ```bash
 npm install
@@ -135,7 +135,7 @@ Ou:
 npm run dev:api
 ```
 
-Endpoint mÃ­nimo disponÃ­vel:
+Endpoint mínimo disponível:
 
 ```text
 GET /health
@@ -163,7 +163,7 @@ npm start
 
 O primeiro frontend fica na pasta `web/` e consome a API em `http://localhost:3001`.
 
-Instale as dependÃªncias do frontend:
+Instale as dependências do frontend:
 
 ```bash
 cd web
@@ -176,7 +176,7 @@ Rode o frontend:
 npm run dev
 ```
 
-TambÃ©m Ã© possÃ­vel iniciar pela raiz:
+Também é possível iniciar pela raiz:
 
 ```bash
 npm run dev:web
@@ -190,7 +190,7 @@ URLs locais:
 A tela inicial tem abas simples, sem React Router:
 
 - `Empresas`: lista empresas, permite busca por nome, código ou documento, e abre o formulário de lançamento manual de recálculo.
-- `Recálculos`: lista recálculos, permite filtrar por competência, tipo de guia, status e período, e exibe o detalhe com evidências e auditoria vinculada.
+- `Recálculos`: lista recálculos, permite filtrar por competência, tipo de guia, status e período, e exibe o detalhe com evidências e auditoria vinculada, incluindo usuário quando disponível.
 
 Enquanto o login real não existe, informe no topo da tela o ID temporário do usuário `Admin Local`; esse valor é salvo apenas no `localStorage` do navegador e enviado como `x-user-id`. O mesmo ID é usado como `responsavelId` nesta primeira versão.
 
@@ -215,24 +215,24 @@ Detalhar empresa:
 GET /empresas/:id
 ```
 
-Listar recalculos:
+Listar recálculos:
 
 ```http
 GET /recalculos
 GET /recalculos?competencia=2026-05&status=LANCADO
 ```
 
-Detalhar recalculo:
+Detalhar recálculo:
 
 ```http
 GET /recalculos/:id
 ```
 
-Criar recalculo:
+Criar recálculo:
 
 ```http
 POST /recalculos
-x-user-id: <id do usuario do seed>
+x-user-id: <id do usuário do seed>
 Content-Type: application/json
 
 {
@@ -241,19 +241,19 @@ Content-Type: application/json
   "competencia": "2026-06",
   "descricao": "Recalculo de guia DAS solicitado para validacao da API",
   "dataRecalculo": "2026-06-15T10:00:00.000-03:00",
-  "responsavelId": "<id do usuario responsavel>",
+  "responsavelId": "<id do usuário responsável>",
   "motivo": "Teste de desenvolvimento",
   "solicitante": "Contato Exemplo",
   "dataSolicitacao": "2026-06-14T09:00:00.000-03:00",
-  "observacoes": "Registro ficticio para teste local"
+  "observacoes": "Registro fictício para teste local"
 }
 ```
 
-O header `x-user-id` e temporario para desenvolvimento, ate a implementacao do login real. Ele nao e autenticacao; apenas identifica o usuario ativo que sera usado como criador do registro e da auditoria.
+O header `x-user-id` é temporário para desenvolvimento, até a implementação do login real. Ele não é autenticação; apenas identifica o usuário ativo que será usado como criador do registro e da auditoria.
 
 ## Modelo inicial
 
-O schema inicial contÃ©m:
+O schema inicial contém:
 
 - `usuarios`
 - `empresas`
@@ -265,19 +265,19 @@ O schema inicial contÃ©m:
 
 Regras contempladas na modelagem:
 
-- empresa Ãºnica por `codigo_empresa` e `documento`
+- empresa única por `codigo_empresa` e `documento`
 - contatos separados da empresa
-- recÃ¡lculo sempre vinculado a uma empresa
-- evidÃªncia opcional por ser uma relaÃ§Ã£o separada
-- ausÃªncia de campos de valores monetÃ¡rios para suportar relatÃ³rio mensal sem valores
-- uso de `ativo=false` e `status=CANCELADO` em vez de exclusÃ£o definitiva
-- relacionamentos e Ã­ndices iniciais para busca, relatÃ³rio e auditoria
+- recálculo sempre vinculado a uma empresa
+- evidência opcional por ser uma relação separada
+- ausência de campos de valores monetários para suportar relatório mensal sem valores
+- uso de `ativo=false` e `status=CANCELADO` em vez de exclusão definitiva
+- relacionamentos e índices iniciais para busca, relatório e auditoria
 
-## Ainda nÃ£o implementado
+## Ainda não implementado
 
-- login/autenticaÃ§Ã£o completa
-- upload/importaÃ§Ã£o de planilhas CSV/Excel via tela
-- upload e armazenamento fÃ­sico de prints/evidÃªncias
-- exportaÃ§Ã£o de relatÃ³rio Excel
-- auditoria automatica completa para todas as acoes do sistema
+- login/autenticação completa
+- upload/importação de planilhas CSV/Excel via tela
+- upload e armazenamento físico de prints/evidências
+- exportação de relatório Excel
+- auditoria automática completa para todas as ações do sistema
 - backups automatizados

@@ -95,7 +95,14 @@ function formatarValorAuditoria(value: string | null) {
 }
 
 function obterUsuarioAuditoria(auditoria: AuditoriaDetalhe) {
-  return auditoria.usuario?.nome ?? auditoria.usuarioId ?? "-";
+  const nome = auditoria.usuario?.nome?.trim();
+  const email = auditoria.usuario?.email?.trim();
+
+  if (nome && email) {
+    return `${nome} (${email})`;
+  }
+
+  return nome ?? email ?? auditoria.usuarioId ?? "-";
 }
 
 export function RecalculoDetalhe({ recalculoId }: RecalculoDetalheProps) {
