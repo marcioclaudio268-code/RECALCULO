@@ -2,6 +2,19 @@
 
 Base técnica inicial para um sistema interno de escritório contábil usado em rede local. O objetivo do projeto é registrar solicitações de recálculo de guias vinculadas a empresas cadastradas, manter evidências opcionais e preservar trilha de auditoria. O recálculo da guia acontece fora do sistema; esta aplicação registra e organiza o fluxo.
 
+## Regua de etapas
+
+- Etapa 1 — Fundação técnica: concluída
+- Etapa 2 — Banco e modelagem inicial: concluída
+- Etapa 3 — Importação de empresas/contatos: concluída
+- Etapa 4 — API operacional de recálculos: concluída
+- Etapa 5 — Primeira interface web: concluída
+- Etapa 6 — Edição/cancelamento com auditoria: concluída
+- Etapa 7 — Evidências/prints opcionais: concluída tecnicamente
+- Etapa 8 — Relatório mensal Excel: concluída
+- Etapa 9 — Login real e controle de usuários: pendente
+- Etapa 10 — Preparação para instalação no escritório: pendente
+
 ## Stack
 
 - Node.js
@@ -224,6 +237,35 @@ GET /evidencias/:id/arquivo
 x-user-id: <id do usuário>
 ```
 
+## Etapa 8 — Relatório mensal Excel
+
+O financeiro pode exportar uma planilha `.xlsx` com os recálculos feitos em um período para apuração e cobrança fora do sistema. O relatório não contém valores financeiros, não inclui caminho físico de evidências e não contém senha/hash ou dados sensíveis desnecessários.
+
+Rota:
+
+```http
+GET /relatorios/recalculos.xlsx?dataInicio=2026-05-01&dataFim=2026-05-31
+x-user-id: <id do usuário>
+```
+
+Parâmetros:
+
+- `dataInicio`: obrigatório, no formato `YYYY-MM-DD`
+- `dataFim`: obrigatório, no formato `YYYY-MM-DD`
+- `incluirCancelados`: opcional, `true` ou `false`; padrão `false`
+
+Regras:
+
+- o filtro usa `dataRecalculo`
+- `dataFim` inclui o dia inteiro, até 23:59:59.999
+- por padrão, recálculos com status `CANCELADO` ficam fora
+- com `incluirCancelados=true`, cancelados entram no relatório mantendo a coluna `Status`
+- o período máximo permitido é de 370 dias
+- `x-user-id` ainda é temporário até o login real e deve apontar para um usuário ativo
+- o financeiro apura e adiciona valores fora do sistema
+
+No frontend, a aba `Relatórios` permite informar data inicial, data final, marcar `Incluir cancelados` e baixar o Excel.
+
 ## Rotas iniciais da API
 
 Healthcheck:
@@ -334,6 +376,5 @@ Regras contempladas na modelagem:
 
 - login/autenticação completa
 - upload/importação de planilhas CSV/Excel via tela
-- exportação de relatório Excel
 - auditoria automática completa para todas as ações do sistema
 - backups automatizados
