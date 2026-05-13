@@ -16,6 +16,7 @@ type UsuariosPageProps = {
 
 type NovoUsuarioForm = {
   nome: string;
+  login: string;
   email: string;
   senha: string;
   perfil: PerfilUsuario;
@@ -23,6 +24,7 @@ type NovoUsuarioForm = {
 
 const novoUsuarioInicial: NovoUsuarioForm = {
   nome: "",
+  login: "",
   email: "",
   senha: "",
   perfil: "OPERADOR"
@@ -45,10 +47,12 @@ export function UsuariosPage({ usuarioAtualId }: UsuariosPageProps) {
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [edicao, setEdicao] = useState<{
     nome: string;
+    login: string;
     email: string;
     perfil: PerfilUsuario;
   }>({
     nome: "",
+    login: "",
     email: "",
     perfil: "OPERADOR"
   });
@@ -80,8 +84,8 @@ export function UsuariosPage({ usuarioAtualId }: UsuariosPageProps) {
     setErro(null);
     setSucesso(null);
 
-    if (!novoUsuario.nome.trim() || !novoUsuario.email.trim() || !novoUsuario.senha) {
-      setErro("Informe nome, e-mail e senha.");
+    if (!novoUsuario.nome.trim() || !novoUsuario.login.trim() || !novoUsuario.senha) {
+      setErro("Informe nome, login e senha.");
       return;
     }
 
@@ -90,7 +94,8 @@ export function UsuariosPage({ usuarioAtualId }: UsuariosPageProps) {
     try {
       await criarUsuario({
         nome: novoUsuario.nome.trim(),
-        email: novoUsuario.email.trim(),
+        login: novoUsuario.login.trim(),
+        email: novoUsuario.email.trim() || null,
         senha: novoUsuario.senha,
         perfil: novoUsuario.perfil
       });
@@ -108,7 +113,8 @@ export function UsuariosPage({ usuarioAtualId }: UsuariosPageProps) {
     setEditandoId(usuario.id);
     setEdicao({
       nome: usuario.nome,
-      email: usuario.email,
+      login: usuario.login,
+      email: usuario.email ?? "",
       perfil: usuario.perfil
     });
     setErro(null);
@@ -123,7 +129,8 @@ export function UsuariosPage({ usuarioAtualId }: UsuariosPageProps) {
     try {
       await editarUsuario(usuario.id, {
         nome: edicao.nome.trim(),
-        email: edicao.email.trim(),
+        login: edicao.login.trim(),
+        email: edicao.email.trim() || null,
         perfil: edicao.perfil
       });
       setEditandoId(null);
@@ -216,6 +223,19 @@ export function UsuariosPage({ usuarioAtualId }: UsuariosPageProps) {
           />
         </label>
         <label>
+          <span>Login</span>
+          <input
+            value={novoUsuario.login}
+            autoCapitalize="none"
+            onChange={(event) =>
+              setNovoUsuario((current) => ({
+                ...current,
+                login: event.target.value
+              }))
+            }
+          />
+        </label>
+        <label>
           <span>E-mail</span>
           <input
             type="email"
@@ -269,6 +289,7 @@ export function UsuariosPage({ usuarioAtualId }: UsuariosPageProps) {
           <thead>
             <tr>
               <th>Nome</th>
+              <th>Login</th>
               <th>E-mail</th>
               <th>Perfil</th>
               <th>Status</th>
@@ -302,6 +323,22 @@ export function UsuariosPage({ usuarioAtualId }: UsuariosPageProps) {
                   <td>
                     {editando ? (
                       <input
+                        value={edicao.login}
+                        autoCapitalize="none"
+                        onChange={(event) =>
+                          setEdicao((current) => ({
+                            ...current,
+                            login: event.target.value
+                          }))
+                        }
+                      />
+                    ) : (
+                      usuario.login
+                    )}
+                  </td>
+                  <td>
+                    {editando ? (
+                      <input
                         type="email"
                         value={edicao.email}
                         onChange={(event) =>
@@ -312,7 +349,7 @@ export function UsuariosPage({ usuarioAtualId }: UsuariosPageProps) {
                         }
                       />
                     ) : (
-                      usuario.email
+                      usuario.email ?? "-"
                     )}
                   </td>
                   <td>
@@ -410,7 +447,7 @@ export function UsuariosPage({ usuarioAtualId }: UsuariosPageProps) {
             })}
             {!isLoading && usuarios.length === 0 && (
               <tr>
-                <td colSpan={7} className="empty-cell">
+                <td colSpan={8} className="empty-cell">
                   Nenhum usuario encontrado.
                 </td>
               </tr>

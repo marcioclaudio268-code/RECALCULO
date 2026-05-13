@@ -218,7 +218,7 @@ export default function App() {
         </div>
         <div className="session-user">
           <span>Usuario: {usuario.nome}</span>
-          <small>{usuario.email}</small>
+          <small>{usuario.email ?? usuario.login}</small>
           <button type="button" className="button-secondary" onClick={handleLogout}>
             Sair
           </button>

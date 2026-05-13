@@ -9,8 +9,15 @@ import {
 } from "../src/generated/prisma/client.js";
 import { prisma } from "../src/lib/prisma.js";
 
-const adminEmail = "admin@recalculo.local";
-const adminPassword = "admin123";
+const adminLogin = lerEnvOpcional("SEED_ADMIN_LOGIN", "admin");
+const adminEmail = lerEnvOpcional("SEED_ADMIN_EMAIL", "admin@recalculo.local");
+const adminPassword = lerEnvObrigatoria("SEED_ADMIN_PASSWORD");
+
+const operadorTesteLogin = lerEnvOpcional("SEED_OPERADOR_LOGIN", "dp-aline");
+const operadorTesteLoginAntigoComErro = "dp-alien";
+const operadorTesteEmail = lerEnvEmailOpcional("SEED_OPERADOR_EMAIL");
+const operadorTestePassword = lerEnvObrigatoria("SEED_OPERADOR_PASSWORD");
+
 const empresaDocumento = "11222333000181";
 const empresaCodigo = "DEV-001";
 const contatoEmail = "contato@empresaexemplo.local";
@@ -18,10 +25,37 @@ const recalculoDescricao = "Recálculo de guia DAS solicitado para validação d
 const dataSolicitacao = new Date("2026-05-11T09:00:00.000-03:00");
 const dataRecalculo = new Date("2026-05-11T11:00:00.000-03:00");
 
+function lerEnvObrigatoria(nome: string) {
+  const value = process.env[nome]?.trim();
+
+  if (!value) {
+    throw new Error(`${nome} obrigatoria para executar o seed.`);
+  }
+
+  return value;
+}
+
+function lerEnvOpcional(nome: string, fallback: string) {
+  return process.env[nome]?.trim() || fallback;
+}
+
+function lerEnvEmailOpcional(nome: string) {
+  const value = process.env[nome]?.trim();
+
+  if (!value || value.toLowerCase() === "null") {
+    return null;
+  }
+
+  return value.toLowerCase();
+}
+
 async function seedUsuarioAdmin() {
-  const usuarioExistente = await prisma.usuario.findUnique({
+  const usuarioExistente = await prisma.usuario.findFirst({
     where: {
-      email: adminEmail
+      OR: [
+        { login: adminLogin },
+        { email: adminEmail }
+      ]
     }
   });
 
@@ -29,6 +63,7 @@ async function seedUsuarioAdmin() {
     return prisma.usuario.create({
       data: {
         nome: "Admin Local",
+        login: adminLogin,
         email: adminEmail,
         senhaHash: await hash(adminPassword, 10),
         perfil: PerfilUsuario.ADMIN,
@@ -38,8 +73,11 @@ async function seedUsuarioAdmin() {
   }
 
   const senhaConfere = await compare(adminPassword, usuarioExistente.senhaHash);
+
   const precisaAtualizar =
     usuarioExistente.nome !== "Admin Local" ||
+    usuarioExistente.login !== adminLogin ||
+    usuarioExistente.email !== adminEmail ||
     usuarioExistente.ativo !== true ||
     usuarioExistente.perfil !== PerfilUsuario.ADMIN ||
     !senhaConfere;
@@ -54,9 +92,71 @@ async function seedUsuarioAdmin() {
     },
     data: {
       nome: "Admin Local",
+      login: adminLogin,
+      email: adminEmail,
       perfil: PerfilUsuario.ADMIN,
       ativo: true,
       ...(senhaConfere ? {} : { senhaHash: await hash(adminPassword, 10) })
+    }
+  });
+}
+
+async function seedUsuarioOperadorTeste() {
+  const usuarioComLoginCorreto = await prisma.usuario.findUnique({
+    where: {
+      login: operadorTesteLogin
+    }
+  });
+  const usuarioComLoginAntigo = usuarioComLoginCorreto
+    ? null
+    : await prisma.usuario.findUnique({
+        where: {
+          login: operadorTesteLoginAntigoComErro
+        }
+      });
+  const usuarioExistente = usuarioComLoginCorreto ?? usuarioComLoginAntigo;
+
+  if (!usuarioExistente) {
+    return prisma.usuario.create({
+      data: {
+        nome: "DP Aline",
+        login: operadorTesteLogin,
+        email: operadorTesteEmail,
+        senhaHash: await hash(operadorTestePassword, 10),
+        perfil: PerfilUsuario.OPERADOR,
+        ativo: true
+      }
+    });
+  }
+
+  const senhaConfere = await compare(
+    operadorTestePassword,
+    usuarioExistente.senhaHash
+  );
+
+  const precisaAtualizar =
+    usuarioExistente.nome !== "DP Aline" ||
+    usuarioExistente.login !== operadorTesteLogin ||
+    usuarioExistente.email !== operadorTesteEmail ||
+    usuarioExistente.ativo !== true ||
+    usuarioExistente.perfil !== PerfilUsuario.OPERADOR ||
+    !senhaConfere;
+
+  if (!precisaAtualizar) {
+    return usuarioExistente;
+  }
+
+  return prisma.usuario.update({
+    where: {
+      id: usuarioExistente.id
+    },
+    data: {
+      nome: "DP Aline",
+      login: operadorTesteLogin,
+      email: operadorTesteEmail,
+      perfil: PerfilUsuario.OPERADOR,
+      ativo: true,
+      ...(senhaConfere ? {} : { senhaHash: await hash(operadorTestePassword, 10) })
     }
   });
 }
@@ -222,6 +322,7 @@ async function seedAuditoria(usuarioId: string, recalculoId: string) {
 
 async function main() {
   const admin = await seedUsuarioAdmin();
+  const operadorTeste = await seedUsuarioOperadorTeste();
   const empresa = await seedEmpresa();
   const contato = await seedContato(empresa.id);
   const { recalculo, criado: recalculoCriado } = await seedRecalculo(
@@ -235,7 +336,8 @@ async function main() {
 
   console.log("Seed de desenvolvimento concluído.");
   console.table([
-    { entidade: "Usuario", id: admin.id, chave: admin.email },
+    { entidade: "Usuario Admin", id: admin.id, chave: admin.login },
+    { entidade: "Usuario Operador", id: operadorTeste.id, chave: operadorTeste.login },
     { entidade: "Empresa", id: empresa.id, chave: empresa.codigoEmpresa },
     { entidade: "ContatoEmpresa", id: contato.id, chave: contato.email },
     {

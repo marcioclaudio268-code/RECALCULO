@@ -10,7 +10,7 @@ type LoginPageProps = {
 };
 
 export function LoginPage({ mensagem, onLogin }: LoginPageProps) {
-  const [email, setEmail] = useState("");
+  const [login, setLogin] = useState("");
   const [senha, setSenha] = useState("");
   const [isEntrando, setIsEntrando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -19,8 +19,8 @@ export function LoginPage({ mensagem, onLogin }: LoginPageProps) {
     event.preventDefault();
     setErro(null);
 
-    if (!email.trim()) {
-      setErro("Informe o e-mail.");
+    if (!login.trim()) {
+      setErro("Informe o usuario ou e-mail.");
       return;
     }
 
@@ -32,7 +32,7 @@ export function LoginPage({ mensagem, onLogin }: LoginPageProps) {
     setIsEntrando(true);
 
     try {
-      const resultado = await loginApi(email.trim(), senha);
+      const resultado = await loginApi(login.trim(), senha);
       onLogin(resultado.token, resultado.usuario);
     } catch (error) {
       setErro(error instanceof Error ? error.message : "Erro ao entrar.");
@@ -56,12 +56,13 @@ export function LoginPage({ mensagem, onLogin }: LoginPageProps) {
           {mensagem && <div className="message warning">{mensagem}</div>}
 
           <label>
-            <span>E-mail</span>
+            <span>Usuario ou e-mail</span>
             <input
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              type="text"
+              value={login}
+              onChange={(event) => setLogin(event.target.value)}
               autoComplete="username"
+              autoCapitalize="none"
               autoFocus
             />
           </label>

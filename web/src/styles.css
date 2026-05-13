@@ -494,7 +494,7 @@ tr:last-child td {
   align-items: end;
   display: grid;
   gap: 10px;
-  grid-template-columns: minmax(180px, 1fr) minmax(220px, 1fr) minmax(160px, 1fr) 150px auto;
+  grid-template-columns: minmax(160px, 1fr) 140px minmax(200px, 1fr) minmax(150px, 1fr) 140px auto;
 }
 
 .usuario-create-form label {

@@ -149,6 +149,10 @@ export async function editarUsuario(
     await garantirEmailDisponivel(input.email, usuarioId);
   }
 
+  if (input.login) {
+    await garantirLoginDisponivel(input.login, usuarioId);
+  }
+
   if (usuarioId === adminId && input.ativo === false) {
     throw new HttpError(400, "Administrador nao pode desativar a propria conta.");
   }
@@ -174,6 +178,7 @@ export async function editarUsuario(
       },
       data: {
         ...(Object.hasOwn(input, "nome") ? { nome: input.nome } : {}),
+        ...(Object.hasOwn(input, "login") ? { login: input.login } : {}),
         ...(Object.hasOwn(input, "email") ? { email: input.email } : {}),
         ...(Object.hasOwn(input, "perfil") ? { perfil: input.perfil } : {}),
         ...(Object.hasOwn(input, "ativo") ? { ativo: input.ativo } : {})

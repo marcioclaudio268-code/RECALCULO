@@ -15,9 +15,14 @@ const usuarioSeguroSelect = {
 } as const;
 
 export async function login(input: LoginBody) {
-  const usuario = await prisma.usuario.findUnique({
+  const identificador = input.login.toLowerCase();
+
+  const usuario = await prisma.usuario.findFirst({
     where: {
-      login: input.login
+      OR: [
+        { login: identificador },
+        { email: identificador }
+      ]
     },
     select: {
       id: true,

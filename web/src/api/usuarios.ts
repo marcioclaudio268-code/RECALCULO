@@ -4,8 +4,9 @@ export type PerfilUsuario = "ADMIN" | "OPERADOR";
 
 export type Usuario = {
   id: string;
+  login: string;
   nome: string;
-  email: string;
+  email: string | null;
   perfil: PerfilUsuario;
   ativo: boolean;
   createdAt: string;
@@ -14,7 +15,8 @@ export type Usuario = {
 
 export type CriarUsuarioInput = {
   nome: string;
-  email: string;
+  login: string;
+  email?: string | null;
   senha: string;
   perfil: PerfilUsuario;
   ativo?: boolean;
@@ -22,7 +24,8 @@ export type CriarUsuarioInput = {
 
 export type EditarUsuarioInput = {
   nome?: string;
-  email?: string;
+  login?: string;
+  email?: string | null;
   perfil?: PerfilUsuario;
   ativo?: boolean;
 };

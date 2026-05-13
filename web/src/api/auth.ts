@@ -3,7 +3,8 @@ import { apiRequest, clearAuthToken } from "./client";
 export type UsuarioAutenticado = {
   id: string;
   nome: string;
-  email: string;
+  login: string;
+  email: string | null;
   perfil: "ADMIN" | "OPERADOR";
 };
 
@@ -12,12 +13,12 @@ export type LoginResponse = {
   usuario: UsuarioAutenticado;
 };
 
-export async function login(email: string, senha: string) {
+export async function login(login: string, senha: string) {
   return apiRequest<LoginResponse>("/auth/login", {
     method: "POST",
     skipUnauthorizedHandler: true,
     body: JSON.stringify({
-      email,
+      login,
       senha
     })
   });
