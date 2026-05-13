@@ -1,3 +1,4 @@
+/* trunk-ignore-all(prettier) */
 import { compare } from "bcryptjs";
 import { prisma } from "../../lib/prisma.js";
 import { HttpError } from "../../lib/http-error.js";
@@ -8,6 +9,7 @@ import type { LoginBody } from "./auth.schemas.js";
 const usuarioSeguroSelect = {
   id: true,
   nome: true,
+  login: true,
   email: true,
   perfil: true
 } as const;
@@ -15,11 +17,12 @@ const usuarioSeguroSelect = {
 export async function login(input: LoginBody) {
   const usuario = await prisma.usuario.findUnique({
     where: {
-      email: input.email
+      login: input.login
     },
     select: {
       id: true,
       nome: true,
+      login: true,
       email: true,
       perfil: true,
       senhaHash: true,
@@ -28,7 +31,7 @@ export async function login(input: LoginBody) {
   });
 
   if (!usuario) {
-    throw new HttpError(401, "E-mail ou senha invalidos.");
+    throw new HttpError(401, "Login ou senha invalidos.");
   }
 
   if (!usuario.ativo) {
@@ -38,20 +41,23 @@ export async function login(input: LoginBody) {
   const senhaValida = await compare(input.senha, usuario.senhaHash);
 
   if (!senhaValida) {
-    throw new HttpError(401, "E-mail ou senha invalidos.");
+    throw new HttpError(401, "Login ou senha invalidos.");
   }
 
   const usuarioSeguro = {
     id: usuario.id,
     nome: usuario.nome,
+    login: usuario.login,
     email: usuario.email,
     perfil: usuario.perfil
   };
+
   const token = gerarTokenUsuario(usuarioSeguro);
 
   await prisma.$transaction(async (tx) => {
     await registrarLogin(tx, {
       usuarioId: usuario.id,
+      login: usuario.login,
       email: usuario.email
     });
   });

@@ -1,19 +1,20 @@
 import {
   AcaoAuditoria,
   EntidadeAuditoria,
-  type Prisma
+  type Prisma,
 } from "../../generated/prisma/client.js";
 
 type AuditoriaClient = Pick<Prisma.TransactionClient, "auditoria">;
 
 type RegistrarLoginParams = {
   usuarioId: string;
-  email: string;
+  login: string;
+  email: string | null;
 };
 
 export async function registrarLogin(
   client: AuditoriaClient,
-  params: RegistrarLoginParams
+  params: RegistrarLoginParams,
 ) {
   return client.auditoria.create({
     data: {
@@ -24,9 +25,10 @@ export async function registrarLogin(
       campoAlterado: null,
       valorAnterior: null,
       valorNovo: JSON.stringify({
-        email: params.email
-      })
-    }
+        login: params.login,
+        email: params.email,
+      }),
+    },
   });
 }
 
@@ -35,7 +37,8 @@ type RegistrarCriacaoUsuarioParams = {
   usuarioCriadoId: string;
   resumo: {
     nome: string;
-    email: string;
+    login: string;
+    email: string | null;
     perfil: string;
     ativo: boolean;
   };
@@ -43,7 +46,7 @@ type RegistrarCriacaoUsuarioParams = {
 
 export async function registrarCriacaoUsuario(
   client: AuditoriaClient,
-  params: RegistrarCriacaoUsuarioParams
+  params: RegistrarCriacaoUsuarioParams,
 ) {
   return client.auditoria.create({
     data: {
@@ -53,8 +56,8 @@ export async function registrarCriacaoUsuario(
       acao: AcaoAuditoria.CRIACAO,
       campoAlterado: null,
       valorAnterior: null,
-      valorNovo: JSON.stringify(params.resumo)
-    }
+      valorNovo: JSON.stringify(params.resumo),
+    },
   });
 }
 
@@ -64,7 +67,7 @@ export async function registrarEdicaoUsuario(
     usuarioId: string;
     usuarioEditadoId: string;
     alteracoes: AlteracaoAuditoria[];
-  }
+  },
 ) {
   return Promise.all(
     params.alteracoes.map((alteracao) =>
@@ -76,10 +79,10 @@ export async function registrarEdicaoUsuario(
           acao: AcaoAuditoria.EDICAO,
           campoAlterado: alteracao.campoAlterado,
           valorAnterior: alteracao.valorAnterior,
-          valorNovo: alteracao.valorNovo
-        }
-      })
-    )
+          valorNovo: alteracao.valorNovo,
+        },
+      }),
+    ),
   );
 }
 
@@ -99,7 +102,7 @@ type RegistrarCriacaoRecalculoParams = {
 
 export async function registrarCriacaoRecalculo(
   client: AuditoriaClient,
-  params: RegistrarCriacaoRecalculoParams
+  params: RegistrarCriacaoRecalculoParams,
 ) {
   return client.auditoria.create({
     data: {
@@ -116,9 +119,9 @@ export async function registrarCriacaoRecalculo(
         descricao: params.resumo.descricao,
         dataRecalculo: params.resumo.dataRecalculo.toISOString(),
         responsavelId: params.resumo.responsavelId,
-        status: params.resumo.status
-      })
-    }
+        status: params.resumo.status,
+      }),
+    },
   });
 }
 
@@ -136,7 +139,7 @@ type RegistrarEdicaoRecalculoParams = {
 
 export async function registrarEdicaoRecalculo(
   client: AuditoriaClient,
-  params: RegistrarEdicaoRecalculoParams
+  params: RegistrarEdicaoRecalculoParams,
 ) {
   return Promise.all(
     params.alteracoes.map((alteracao) =>
@@ -148,10 +151,10 @@ export async function registrarEdicaoRecalculo(
           acao: AcaoAuditoria.EDICAO,
           campoAlterado: alteracao.campoAlterado,
           valorAnterior: alteracao.valorAnterior,
-          valorNovo: alteracao.valorNovo
-        }
-      })
-    )
+          valorNovo: alteracao.valorNovo,
+        },
+      }),
+    ),
   );
 }
 
@@ -164,7 +167,7 @@ type RegistrarCancelamentoRecalculoParams = {
 
 export async function registrarCancelamentoRecalculo(
   client: AuditoriaClient,
-  params: RegistrarCancelamentoRecalculoParams
+  params: RegistrarCancelamentoRecalculoParams,
 ) {
   return client.auditoria.create({
     data: {
@@ -176,9 +179,9 @@ export async function registrarCancelamentoRecalculo(
       valorAnterior: params.statusAnterior,
       valorNovo: JSON.stringify({
         status: "CANCELADO",
-        motivoCancelamento: params.motivoCancelamento
-      })
-    }
+        motivoCancelamento: params.motivoCancelamento,
+      }),
+    },
   });
 }
 
@@ -195,7 +198,7 @@ type RegistrarAnexoEvidenciaRecalculoParams = {
 
 export async function registrarAnexoEvidenciaRecalculo(
   client: AuditoriaClient,
-  params: RegistrarAnexoEvidenciaRecalculoParams
+  params: RegistrarAnexoEvidenciaRecalculoParams,
 ) {
   return client.auditoria.create({
     data: {
@@ -209,9 +212,9 @@ export async function registrarAnexoEvidenciaRecalculo(
         evidenciaId: params.evidencia.id,
         nomeArquivo: params.evidencia.nomeArquivo,
         tipoArquivo: params.evidencia.tipoArquivo,
-        tamanhoArquivo: params.evidencia.tamanhoArquivo
-      })
-    }
+        tamanhoArquivo: params.evidencia.tamanhoArquivo,
+      }),
+    },
   });
 }
 
@@ -231,7 +234,7 @@ type RegistrarImportacaoEmpresasParams = {
 
 export async function registrarImportacaoEmpresas(
   client: AuditoriaClient,
-  params: RegistrarImportacaoEmpresasParams
+  params: RegistrarImportacaoEmpresasParams,
 ) {
   return client.auditoria.create({
     data: {
@@ -241,7 +244,7 @@ export async function registrarImportacaoEmpresas(
       acao: AcaoAuditoria.IMPORTACAO,
       campoAlterado: null,
       valorAnterior: null,
-      valorNovo: JSON.stringify(params.resumo)
-    }
+      valorNovo: JSON.stringify(params.resumo),
+    },
   });
 }

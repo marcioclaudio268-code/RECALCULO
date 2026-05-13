@@ -7,6 +7,7 @@ import { HttpError } from "./http-error.js";
 const usuarioAutenticadoSelect = {
   id: true,
   nome: true,
+  login: true,
   email: true,
   perfil: true
 } as const;
@@ -14,7 +15,8 @@ const usuarioAutenticadoSelect = {
 export type UsuarioAutenticado = {
   id: string;
   nome: string;
-  email: string;
+  login: string;
+  email: string | null;
   perfil: PerfilUsuario;
 };
 

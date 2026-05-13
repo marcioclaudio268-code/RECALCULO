@@ -14,6 +14,7 @@ import type {
 
 const usuarioSeguroSelect = {
   id: true,
+  login: true,
   nome: true,
   email: true,
   perfil: true,
@@ -41,7 +42,7 @@ function montarAlteracoes(usuarioAtual: UsuarioAtual, input: EditarUsuarioBody) 
     valorNovo: string | null;
   }> = [];
 
-  for (const campo of ["nome", "email", "perfil", "ativo"] as const) {
+  for (const campo of ["nome", "login", "email", "perfil", "ativo"] as const) {
     if (Object.hasOwn(input, campo) && usuarioAtual[campo] !== input[campo]) {
       alteracoes.push({
         campoAlterado: campo,
@@ -69,18 +70,29 @@ async function buscarUsuarioObrigatorio(id: string) {
   return usuario;
 }
 
-async function garantirEmailDisponivel(email: string, ignorarUsuarioId?: string) {
+async function garantirEmailDisponivel(email?: string | null, ignorarUsuarioId?: string) {
+  if (!email) {
+    return;
+  }
+
   const usuario = await prisma.usuario.findUnique({
-    where: {
-      email
-    },
-    select: {
-      id: true
-    }
+    where: { email },
+    select: { id: true }
   });
 
   if (usuario && usuario.id !== ignorarUsuarioId) {
     throw new HttpError(409, "Ja existe usuario com este e-mail.");
+  }
+}
+
+async function garantirLoginDisponivel(login: string, ignorarUsuarioId?: string) {
+  const usuario = await prisma.usuario.findUnique({
+    where: { login },
+    select: { id: true }
+  });
+
+  if (usuario && usuario.id !== ignorarUsuarioId) {
+    throw new HttpError(409, "Ja existe usuario com este login.");
   }
 }
 
@@ -94,12 +106,14 @@ export async function listarUsuarios() {
 }
 
 export async function criarUsuario(adminId: string, input: CriarUsuarioBody) {
+  await garantirLoginDisponivel(input.login);
   await garantirEmailDisponivel(input.email);
 
   return prisma.$transaction(async (tx) => {
     const usuario = await tx.usuario.create({
       data: {
         nome: input.nome,
+        login: input.login,
         email: input.email,
         senhaHash: await hash(input.senha, 10),
         perfil: input.perfil,
@@ -113,6 +127,7 @@ export async function criarUsuario(adminId: string, input: CriarUsuarioBody) {
       usuarioCriadoId: usuario.id,
       resumo: {
         nome: usuario.nome,
+        login: usuario.login,
         email: usuario.email,
         perfil: usuario.perfil,
         ativo: usuario.ativo
@@ -136,6 +151,14 @@ export async function editarUsuario(
 
   if (usuarioId === adminId && input.ativo === false) {
     throw new HttpError(400, "Administrador nao pode desativar a propria conta.");
+  }
+
+  if (
+    usuarioId === adminId &&
+    Object.hasOwn(input, "perfil") &&
+    input.perfil !== usuarioAtual.perfil
+  ) {
+    throw new HttpError(400, "Administrador nao pode alterar o proprio perfil.");
   }
 
   const alteracoes = montarAlteracoes(usuarioAtual, input);
